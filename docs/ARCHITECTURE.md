@@ -130,7 +130,10 @@ stated in the command reference rather than left for a caller to discover.
 
 ## Boundaries
 
-- The engine makes no network calls. Nothing in this repository does.
+- The engine makes no network calls, and neither does the runtime layer. The one component
+  that reaches the network is the installer, and only when it runs as the published package:
+  it downloads the archive for the version being installed. See
+  [COMPATIBILITY.md](COMPATIBILITY.md) and [INSTALL.md](INSTALL.md).
 - The source transcript is read and never written.
 - No secrets are stored. The code reads no credential files.
 - No model is called. The `.llm.json` payload is shaped for a model to read, not produced by

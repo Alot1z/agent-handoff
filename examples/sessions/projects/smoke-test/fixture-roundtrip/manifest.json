@@ -1,0 +1,22 @@
+{
+  "session": "fixture-roundtrip",
+  "project": "smoke-test",
+  "harness": "codex",
+  "model": "gpt-5-codex",
+  "created_at": "2026-10-08T22:53:03.961Z",
+  "source_paths": [
+    "tests/fixtures/minimal-transcript.jsonl"
+  ],
+  "watermark": 1,
+  "raw_sha256": "21e3680b91594304affe49dfbfd6f6be7beff5e008a522ea14e3d344631264e8",
+  "revisions": 1,
+  "updated_at": "2026-10-08T22:53:03.964Z",
+  "turn_count": 2,
+  "counts": {
+    "USER": 1,
+    "AGENT": 1,
+    "THOUGHT": 0,
+    "TOOL": 0
+  },
+  "manifest_sha256": "a81d076e3334b8341f2829d0f38daf2cdbaf667269a9909dc523797c74e46ce5"
+}

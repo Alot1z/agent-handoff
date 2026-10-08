@@ -227,7 +227,9 @@ test('runtime: permission denial path (C) — personal-data read DENIED, never e
 });
 
 test('runtime: R2 on workspace is NEEDS_AUTH (exit 4), not silently allowed', () => {
-  const r = runEng(['evaluate', '--risk', 'R2', '--target', 'repo-upstream/README.md']);
+  // README.md is a file every layout has — a clone, a release archive and the development
+  // tree — so the target stays valid wherever this suite runs.
+  const r = runEng(['evaluate', '--risk', 'R2', '--target', 'README.md']);
   assert.equal(r.status, 4, 'NEEDS_AUTH must exit 4, got ' + r.status);
   assert.ok(r.stdout.includes('"NEEDS_AUTH"'), 'verdict: ' + r.stdout);
 });
@@ -407,6 +409,44 @@ test('runtime: an approved workspace wins over a broad personal-data root it liv
     assert.equal(d.status, 3, 'an explicit denial must outrank the workspace approval: ' + d.stdout);
     assert.ok(d.stdout.includes('DENIED_ROOT'), 'classification: ' + d.stdout);
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+// The installer's manifest is the one list that decides what an installed copy contains, and
+// it is written in the PUBLIC tree's terms so that a clone and a release archive resolve it at
+// the same paths. Two drifts are possible, and both happened: a source addressed under a path
+// only the development tree has (the guides, which installed as fourteen "Source file not
+// found" warnings and no docs/ at all), and a fallback version a release bumps in one place
+// but not the other. This test pins both against the tree it runs in.
+// An INSTALLED copy does not ship install/ — the manifest deliberately leaves the installer
+// out — so this test is about the tree that has one, and an installed copy skips it by name
+// rather than failing the suite that proves the installed copy works.
+const INSTALLER_SRC = path.join(REPO, 'install', 'install.mjs');
+test('installer: every manifest source resolves here, and the fallback version matches SKILL.md', (t) => {
+  if (!fs.existsSync(INSTALLER_SRC)) {
+    return t.skip('no install/ in this tree — an installed copy omits the installer by design');
+  }
+  const src = fs.readFileSync(INSTALLER_SRC, 'utf8');
+  const list = src.match(/const SKILL_FILES = \[([\s\S]*?)\n\];/);
+  assert.ok(list, 'SKILL_FILES must be readable from the installer source');
+  const froms = [...list[1].matchAll(/from: '([^']+)'/g)].map((m) => m[1]);
+  assert.ok(froms.length >= 30, 'non-vacuous manifest, entries=' + froms.length);
+  // Resolved exactly as the installer resolves it: repo-upstream/<from> first, then <from>.
+  for (const from of froms) {
+    const dev = path.join(REPO, 'repo-upstream', from);
+    const pub = path.join(REPO, from);
+    assert.ok(fs.existsSync(dev) || fs.existsSync(pub),
+      'install manifest source resolves nowhere (' + from + ') — an installed copy would silently lose it');
+  }
+
+  // The fallback is what the published package uses before it has a tree, so a release that
+  // bumps SKILL.md without bumping it would install and report the previous version.
+  const fallback = /const FALLBACK_SKILL_VERSION = '([^']+)'/.exec(src);
+  assert.ok(fallback, 'the installer must declare its fallback version');
+  const skillMd = fs.readFileSync(path.join(REPO, 'SKILL.md'), 'utf8');
+  const version = /^version:\s*(\S+)/m.exec(skillMd);
+  assert.ok(version, 'SKILL.md must declare a version');
+  assert.equal(fallback[1], version[1],
+    'installer fallback version must equal SKILL.md version');
 });
 
 test('rebuild of identical source is idempotent (up-to-date, revision stable)', () => {

@@ -69,6 +69,7 @@ Full documentation is published at **<https://alot1z.github.io/agent-handoff/>**
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the layers fit together, the data flow, and the boundaries |
 | [docs/CLI.md](docs/CLI.md) | Every executable, verb, flag, exit code and state file |
 | [docs/FORMAT.md](docs/FORMAT.md) | Handoff folder layout, manifest fields, provenance chain |
+| [docs/SESSIONS.md](docs/SESSIONS.md) · [site](https://alot1z.github.io/agent-handoff/SESSIONS.html) | Session index: a sample store, its sessions, and the commands that verify them |
 | [docs/INTEGRATION.md](docs/INTEGRATION.md) | Feeding a transcript in from another program or a CI job |
 | [docs/LEVEL4.md](docs/LEVEL4.md) | The runtime layer: verbs, the evidence gate, bounded execution |
 | [docs/LEVEL5.md](docs/LEVEL5.md) | Dispatching a verified handoff to a worker |

@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/Alot1z/agent-skills-soucecode/skills/agent-handoff/handoff.config.schema.json",
+  "$id": "https://github.com/Alot1z/agent-handoff/handoff.config.schema.json",
   "title": "Agent Handoff Configuration",
   "description": "Schema for handoff.config.json — where handoffs are stored, and how a session is captured. Copy handoff.config.example.json to your project root as handoff.config.json to opt in; with no config file the engine keeps its default store. HANDOFFS_ROOT always overrides anything set here.",
   "type": "object",

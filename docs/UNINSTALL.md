@@ -48,7 +48,7 @@ Everything in the installation directory, except the entries listed in the next 
 
 - the engine and runtime: `tools/`, `tools/lib/`
 - metadata: `SKILL.md`, `skill.json`, `package.json`, the manifest JSON files
-- `schemas/`, `refs/`, `templates/`, `docs/`, `src/`, `tests/`
+- `schemas/`, `refs/`, `templates/`, `docs/`, `tests/`
 - `INDEX.json` and any other generated file in that directory
 
 Each removed entry is printed as `Removed file: <name>` or `Removed directory: <name>/`.

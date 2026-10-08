@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-// agent-handoff-install v1.0.0 - npx installer for agent-handoff skill
+// agent-handoff-install - npx installer for the agent-handoff skill
 // Commands: install, update, remove, verify, list
 // Zero external dependencies, pure Node.js
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -11,11 +12,40 @@ import readline from 'node:readline';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const INSTALLER_ROOT = path.resolve(__dirname);
+// The tree the skill is read from when this installer runs inside a checkout or a release
+// archive: the parent of install/. A published package has no parent tree, so this path is
+// also the test that decides between copying files and fetching an archive.
+const SOURCE_DIR = path.resolve(INSTALLER_ROOT, '..');
 const SKILL_NAME = 'agent-handoff';
-const SKILL_VERSION = '2.0.0';
 const REPO_OWNER = 'Alot1z';
 const REPO_NAME = 'agent-handoff';
 const RELEASES_URL = `https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download`;
+const TARBALL_URL = `https://codeload.github.com/${REPO_OWNER}/${REPO_NAME}/tar.gz`;
+const API_LATEST = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`;
+
+// THE VERSION THIS INSTALLER SHIPS. SKILL.md owns it: the same frontmatter that `verify` and
+// `list` read back out of an installed copy. The literal below is only the fallback for the
+// run that has no tree beside it — the published package fetching an archive — and the suite
+// asserts it against SKILL.md, so a release that bumps one cannot leave the other behind.
+const FALLBACK_SKILL_VERSION = '2.0.1';
+function skillVersion() {
+  try {
+    const md = fs.readFileSync(path.join(SOURCE_DIR, 'SKILL.md'), 'utf8');
+    const m = md.match(/^version:\s*(\S+)/m);
+    if (m) return m[1];
+  } catch { /* no tree beside the installer */ }
+  return FALLBACK_SKILL_VERSION;
+}
+const SKILL_VERSION = skillVersion();
+
+// The installer's own version, read from the package it ships in — the same file npm
+// publishes, so the banner cannot lag a release.
+function installerVersion() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(INSTALLER_ROOT, 'package.json'), 'utf8')).version;
+  } catch { return 'unknown'; }
+}
+const INSTALLER_VERSION = installerVersion();
 
 // Locations
 const HOME = process.env.USERPROFILE || process.env.HOME || '';
@@ -144,12 +174,14 @@ const FORCE = hasFlag('--force') || hasFlag('-f');
 // THE INSTALL MANIFEST. One list, used to copy AND to verify, so an installed copy
 // cannot silently lose a file the runtime needs (the engine now imports
 // tools/lib/handoff-root.mjs, and the previous copy list predated that, the runtime MVP
-// and the schemas). `from` is relative to the skill root; `to` is relative to the target.
-// Public-facing guides are sourced from repo-upstream/docs so the install ships them.
+// and the schemas). `from` is relative to the tree the installer runs in; `to` is relative
+// to the target. `from` is written in the PUBLIC tree's terms, because that is the tree the
+// installer runs in once it ships — see resolveSource() for how the development tree, which
+// keeps those same files under repo-upstream/, still resolves them.
 const SKILL_FILES = [
   { from: 'SKILL.md', to: 'SKILL.md' },
-  { from: 'repo-upstream/README.md', to: 'README.md' },
-  { from: 'repo-upstream/LICENSE', to: 'LICENSE' },
+  { from: 'README.md', to: 'README.md' },
+  { from: 'LICENSE', to: 'LICENSE' },
   { from: 'skill.json', to: 'skill.json' },
   { from: 'capability-registry.json', to: 'capability-registry.json' },
   { from: 'permission-policy.json', to: 'permission-policy.json' },
@@ -164,18 +196,18 @@ const SKILL_FILES = [
   { from: 'schemas/handoff.schema.json', to: 'schemas/handoff.schema.json' },
   { from: 'tests/acceptance/acceptance.yaml', to: 'tests/acceptance/acceptance.yaml' },
   { from: 'tests/fixtures/minimal-transcript.jsonl', to: 'tests/fixtures/minimal-transcript.jsonl' },
-  { from: 'repo-upstream/docs/INTEGRATION.md', to: 'docs/INTEGRATION.md' },
-  { from: 'repo-upstream/docs/LEVEL4.md', to: 'docs/LEVEL4.md' },
-  { from: 'repo-upstream/docs/LEVEL5.md', to: 'docs/LEVEL5.md' },
-  { from: 'repo-upstream/docs/FORMAT.md', to: 'docs/FORMAT.md' },
-  { from: 'repo-upstream/docs/PERMISSIONS.md', to: 'docs/PERMISSIONS.md' },
-  { from: 'repo-upstream/docs/CONTRIBUTING.md', to: 'docs/CONTRIBUTING.md' },
-  { from: 'repo-upstream/docs/INSTALL.md', to: 'docs/INSTALL.md' },
-  { from: 'repo-upstream/docs/UPGRADE.md', to: 'docs/UPGRADE.md' },
-  { from: 'repo-upstream/docs/UNINSTALL.md', to: 'docs/UNINSTALL.md' },
-  { from: 'repo-upstream/docs/SECURITY.md', to: 'docs/SECURITY.md' },
-  { from: 'repo-upstream/docs/COMPATIBILITY.md', to: 'docs/COMPATIBILITY.md' },
-  { from: 'repo-upstream/docs/PROVENANCE.md', to: 'docs/PROVENANCE.md' },
+  { from: 'docs/INTEGRATION.md', to: 'docs/INTEGRATION.md' },
+  { from: 'docs/LEVEL4.md', to: 'docs/LEVEL4.md' },
+  { from: 'docs/LEVEL5.md', to: 'docs/LEVEL5.md' },
+  { from: 'docs/FORMAT.md', to: 'docs/FORMAT.md' },
+  { from: 'docs/PERMISSIONS.md', to: 'docs/PERMISSIONS.md' },
+  { from: 'docs/CONTRIBUTING.md', to: 'docs/CONTRIBUTING.md' },
+  { from: 'docs/INSTALL.md', to: 'docs/INSTALL.md' },
+  { from: 'docs/UPGRADE.md', to: 'docs/UPGRADE.md' },
+  { from: 'docs/UNINSTALL.md', to: 'docs/UNINSTALL.md' },
+  { from: 'docs/SECURITY.md', to: 'docs/SECURITY.md' },
+  { from: 'docs/COMPATIBILITY.md', to: 'docs/COMPATIBILITY.md' },
+  { from: 'docs/PROVENANCE.md', to: 'docs/PROVENANCE.md' },
   { from: 'refs/ADAPTERS.md', to: 'refs/ADAPTERS.md' },
   { from: 'refs/handbook.md', to: 'refs/handbook.md' },
   { from: 'refs/protocol.md', to: 'refs/protocol.md' },
@@ -186,6 +218,98 @@ const SKILL_FILES = [
   { from: 'templates/HANDOFF.template.md', to: 'templates/HANDOFF.template.md' },
   { from: 'templates/HANDOFF.llm.schema.json', to: 'templates/HANDOFF.llm.schema.json' },
 ];
+
+// Where a manifest `from` lives. The public shape is tried at its own path, and the
+// development shape at repo-upstream/<from>. Development is tried FIRST: a bare `README.md`
+// in the development tree is the internal one, while the file that ships is the one under
+// repo-upstream/. A clone, a release archive and a fetched tarball have no repo-upstream/,
+// so the same list resolves there at the public path — one manifest, both trees.
+function resolveSource(root, from) {
+  for (const rel of [path.join('repo-upstream', from), from]) {
+    const abs = path.join(root, rel);
+    if (fs.existsSync(abs)) return abs;
+  }
+  return null;
+}
+
+// Is there a skill tree to copy from? Only a checkout or a release archive has one; the
+// published package carries install/ alone, which is the case that must fetch instead.
+function haveSourceTree() {
+  return fs.existsSync(path.join(SOURCE_DIR, 'tools', 'handoff.mjs'));
+}
+
+// The manifest is the copy list AND the completion criterion: a run that cannot resolve a
+// source reports it, and install() fails the install when any target is missing. A file
+// copied but not verified was how the installed engine once went missing its resolver.
+function copyManifest(root, installPath) {
+  const unresolved = [];
+  let copied = 0;
+  for (const file of SKILL_FILES) {
+    const srcPath = resolveSource(root, file.from);
+    if (!srcPath) { unresolved.push(file.from); continue; }
+    const destPath = path.join(installPath, file.to);
+    fs.mkdirSync(path.dirname(destPath), { recursive: true });
+    fs.copyFileSync(srcPath, destPath);
+    copied++;
+  }
+  if (unresolved.length) warn('source file(s) not found: ' + unresolved.join(', '));
+  return copied;
+}
+
+// The newest published release tag, or null when the repository has none (or the API cannot
+// be reached). Null is not an error here: it selects the main branch and says so.
+async function latestTag() {
+  if (typeof fetch === 'undefined') return null;
+  try {
+    const res = await fetch(API_LATEST, {
+      headers: { accept: 'application/vnd.github+json', 'user-agent': 'agent-handoff-install' },
+    });
+    if (!res.ok) return null;
+    const j = await res.json();
+    return j.tag_name || null;
+  } catch { return null; }
+}
+
+// Fetch and unpack the archive for the requested version, into a throwaway directory the
+// caller removes. Returns the unpacked root, so the same manifest copies from it.
+async function fetchAndUnpack(version) {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'agent-handoff-fetch-'));
+  let ref, label;
+  if (version === 'latest') {
+    const tag = await latestTag();
+    ref = tag ? 'refs/tags/' + tag : 'refs/heads/main';
+    label = tag || 'main';
+    if (!tag) warn('no published release found — fetching the main branch instead');
+  } else {
+    ref = 'refs/tags/v' + version;
+    label = 'v' + version;
+  }
+  const url = `${TARBALL_URL}/${ref}`;
+  const tarball = path.join(tmp, 'agent-handoff.tar.gz');
+  log(`Fetching the ${label} archive...`);
+  log(`  ${url}`);
+  await downloadFile(url, tarball);
+  const bytes = fs.statSync(tarball).size;
+  const hash = crypto.createHash('sha256').update(fs.readFileSync(tarball)).digest('hex');
+  log(`  ${(bytes / 1024).toFixed(1)} kB, sha256 ${hash.slice(0, 16)}…`);
+  const unpack = path.join(tmp, 'unpack');
+  fs.mkdirSync(unpack, { recursive: true });
+  // Run tar from inside the temp directory with RELATIVE names. An absolute Windows path
+  // (`C:\Users\…`) is read by tar as a remote host — `tar (child): Cannot connect to C:
+  // resolve failed` — so `-xzf C:\…` fails on the very platform this installer targets first.
+  // Relative operands, with cwd doing the locating, work the same in GNU tar and bsdtar.
+  const tar = spawnSync('tar', ['-xzf', 'agent-handoff.tar.gz', '-C', 'unpack', '--strip-components=1'],
+    { cwd: tmp, encoding: 'utf8' });
+  if (tar.status !== 0) {
+    const why = String(tar.stderr || '').trim().split('\n')[0];
+    error(`Cannot extract the archive (tar exited ${tar.status}${why ? ': ' + why : ''}).\n` +
+      `  Extract it yourself, then install from the unpacked tree:\n\n` +
+      `    curl -L -o agent-handoff.tar.gz ${url}\n` +
+      `    mkdir -p agent-handoff && tar -xzf agent-handoff.tar.gz -C agent-handoff --strip-components=1\n` +
+      `    node agent-handoff/install/install.mjs`);
+  }
+  return { root: unpack, cleanup: () => fs.rmSync(tmp, { recursive: true, force: true }) };
+}
 
 // Resolve install path
 function resolveInstallPath(location, customPath) {
@@ -299,7 +423,7 @@ async function install(location, customPath, version, force) {
   const alreadyInstalled = isInstalled(installPath);
   const currentVersion = alreadyInstalled ? getInstalledVersion(installPath) : null;
   
-  log(`\n${C('bold', 'agent-handoff installer v1.0.0')}`);
+  log(`\n${C('bold', 'agent-handoff installer v' + INSTALLER_VERSION)}`);
   log(`Target: ${installPath}`);
   if (!customPath && location === 'global') {
     const g = resolveGlobalRoot();
@@ -333,47 +457,37 @@ async function install(location, customPath, version, force) {
     error(`Cannot write to ${installPath}. Check permissions or choose a different location.`);
   }
   
-  // Download from source repo (for now, we copy from source)
-  // In production, this would download from GitHub releases
-  const sourceDir = path.resolve(INSTALLER_ROOT, '..');
-  
-  log(`\nInstalling from source...`);
-  
-  // Copy skill files
-  const filesToCopy = SKILL_FILES;
-  
+  // Two ways in, one manifest out. Inside a checkout or a release archive the skill files sit
+  // beside install/ and are copied. From the published package there is no tree to copy —
+  // install/ IS the package — so the archive for the requested version is fetched and
+  // unpacked into a throwaway directory, and the same manifest copies out of it.
+  let sourceRoot = SOURCE_DIR;
+  let cleanup = null;
+  if (haveSourceTree()) {
+    log(`\nInstalling from the tree beside the installer...`);
+  } else {
+    const fetched = await fetchAndUnpack(version);
+    sourceRoot = fetched.root;
+    cleanup = fetched.cleanup;   // removed after the manifest has read out of it
+  }
+
   // Create directories
   fs.mkdirSync(installPath, { recursive: true });
   for (const subdir of ['tools/lib', 'docs', 'refs', 'templates', 'schemas', 'tests/acceptance', 'tests/fixtures']) {
     fs.mkdirSync(path.join(installPath, subdir), { recursive: true });
   }
-  
-  // Copy files
-  let copied = 0;
-  for (const file of filesToCopy) {
-    const srcPath = path.join(sourceDir, file.from);
-    const destPath = path.join(installPath, file.to);
-    if (fs.existsSync(srcPath)) {
-      fs.mkdirSync(path.dirname(destPath), { recursive: true });
-      fs.copyFileSync(srcPath, destPath);
-      copied++;
-    } else {
-      warn(`Source file not found: ${file.from}`);
-    }
-  }
-  
-  // Second copy list for files outside SKILL_FILES. Kept empty on purpose: an installed copy
-  // is only trustworthy when every file it needs is verified by the manifest, and a file
-  // copied but not verified was how the installed engine once went missing its resolver.
-  const srcFiles = [];
-  
-  for (const file of srcFiles) {
-    const srcPath = path.join(sourceDir, file);
-    const destPath = path.join(installPath, file);
-    if (fs.existsSync(srcPath)) {
-      fs.copyFileSync(srcPath, destPath);
-      copied++;
-    }
+
+  const copied = copyManifest(sourceRoot, installPath);
+  if (cleanup) cleanup();
+
+  // The manifest is the completion criterion, so a short install fails here instead of
+  // reporting success. This is the check that was missing when the installer looked for its
+  // guides under a path that only exists in the development tree: it warned fourteen times
+  // and installed a copy with no README, no LICENSE and no docs/ at all.
+  const missing = SKILL_FILES.filter(f => !fs.existsSync(path.join(installPath, f.to)));
+  if (missing.length) {
+    error(`Incomplete install: ${missing.length} of ${SKILL_FILES.length} file(s) missing — ` +
+      missing.map(f => f.to).join(', '));
   }
   
   // Create package.json if not exists
@@ -387,13 +501,16 @@ async function install(location, customPath, version, force) {
     }, null, 2));
   }
   
-  success(`Installed ${SKILL_NAME} v${version === 'latest' ? SKILL_VERSION : version} to ${installPath}`);
+  // The version reported is the one that landed, read back out of the installed SKILL.md —
+  // not the requested string, and not a constant that a release has to remember to bump.
+  const installedVersion = getInstalledVersion(installPath) || (version === 'latest' ? SKILL_VERSION : version);
+  success(`Installed ${SKILL_NAME} v${installedVersion} to ${installPath}`);
   log(`Copied ${copied} files`);
   // `config` is a real verb that exits 0 and prints the resolved root. `--help` is not a verb
   // (it exits 2), so the old hint told every user to run a failing command.
   log(`\nRun with: node ${path.join(installPath, 'tools', 'handoff.mjs')} config`);
-  
-  return { installed: true, path: installPath, version: version === 'latest' ? SKILL_VERSION : version };
+
+  return { installed: true, path: installPath, version: installedVersion };
 }
 
 // Update skill

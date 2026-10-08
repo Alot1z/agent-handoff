@@ -1,0 +1,22 @@
+[
+  {
+    "id": "typescript-project-setup",
+    "uuid": "typescript-project-setup",
+    "project": "demo",
+    "harness": "claude-code",
+    "turns": 11,
+    "revisions": 1,
+    "updated": "2026-10-08T22:53:03.865Z",
+    "manifest_sha256": "141e232eb2ad668f59d746828517e646a5cbe2bc914dd976df3c43c209214d3c"
+  },
+  {
+    "id": "fixture-roundtrip",
+    "uuid": "fixture-roundtrip",
+    "project": "smoke-test",
+    "harness": "codex",
+    "turns": 2,
+    "revisions": 1,
+    "updated": "2026-10-08T22:53:03.964Z",
+    "manifest_sha256": "a81d076e3334b8341f2829d0f38daf2cdbaf667269a9909dc523797c74e46ce5"
+  }
+]

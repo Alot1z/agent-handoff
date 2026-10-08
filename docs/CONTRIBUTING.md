@@ -117,7 +117,6 @@ Checklist:
 | `templates/` | The handoff render template. |
 | `refs/` | Reference documents: harness adapters, protocol, roles, validator, brief checklist. |
 | `tests/fixtures/` | Deterministic inputs for the suite. |
-| `src/` | Reference sources collected from the systems this skill was assembled from. Nothing under `tools/` imports them. |
 | `permission-policy.json` | The default permission policy. |
 | `capability-registry.json` | The default capability declarations. |
 | `handoff.config.schema.json`, `handoff.config.example.json` | Schema and example for `handoff.config.json`. |

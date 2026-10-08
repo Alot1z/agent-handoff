@@ -50,8 +50,11 @@ npx agent-handoff-install --update --location project
 npx agent-handoff-install --update --version 2.0.0
 ```
 
-`--version` records the version you request. Confirm what is actually installed with `--verify`,
-which prints the installed version, rather than trusting the request.
+`--version` installs the version you ask for: the tree beside the installer when there is one
+(a checkout, a release archive), or the archive of that version's tag when there is not (the
+published package carries the installer alone). Confirm what is actually installed with
+`--verify`, which prints the version read back from the installed `SKILL.md`, rather than
+trusting the request.
 
 ## Manual upgrade
 
@@ -60,15 +63,14 @@ Replace the skill files and keep the data:
 1. Extract the release archive (`agent-handoff-latest.zip`, or
    `agent-handoff-v<version>.zip`) to a temporary directory.
 2. Copy the skill files over the installation: `SKILL.md`, `skill.json`, the manifest JSON
-   files, `tools/`, `tools/lib/`, `schemas/`, `refs/`, `templates/`, `docs/`, `src/`, `tests/`.
+   files, `tools/`, `tools/lib/`, `schemas/`, `refs/`, `templates/`, `docs/`, `tests/`.
 3. Do not delete `handoffs/`, `projects/`, `links/`, or `handoff.config.json`.
 
 ```bash
 unzip agent-handoff-latest.zip -d /tmp/agent-handoff-new
 cp -r /tmp/agent-handoff-new/tools/ /tmp/agent-handoff-new/refs/ \
       /tmp/agent-handoff-new/templates/ /tmp/agent-handoff-new/schemas/ \
-      /tmp/agent-handoff-new/docs/ /tmp/agent-handoff-new/src/ \
-      "<install-path>/"
+      /tmp/agent-handoff-new/docs/ "<install-path>/"
 cp /tmp/agent-handoff-new/SKILL.md /tmp/agent-handoff-new/skill.json "<install-path>/"
 ```
 
@@ -79,7 +81,7 @@ cp /tmp/agent-handoff-new/SKILL.md /tmp/agent-handoff-new/skill.json "<install-p
 | `tools/` — the engine and the dynamic runtime | `handoffs/` — your session data |
 | `refs/`, `templates/`, `schemas/`, `docs/` | `projects/`, `links/` |
 | `SKILL.md`, `skill.json`, manifest JSON files | `handoff.config.json` and your edits |
-| `src/` reference sources | `HANDOFFS_ROOT`, if you use it |
+| `install/` — the installer itself | `HANDOFFS_ROOT`, if you use it |
 
 Handoff folders are read from the handoff root in place, so an upgrade does not move or rewrite
 them.
@@ -125,7 +127,7 @@ upgrade damaged the folder.
 | Symptom | Cause and fix |
 |---|---|
 | `Not installed at <dir>` | Nothing to update at that location. Check `--list`, or drop `--location`/`--path`. |
-| Reported version did not change | The installer copies the files it ships. For a pinned version, install from that version's release archive. |
+| Reported version did not change | The installer installs the tree beside it when there is one, so running it from a checkout installs that checkout. Use the published package, or pass `--version <x>` to fetch a tagged archive. |
 | Verification fails after an upgrade | A file is missing or the engine cannot start. Reinstall with `--force` and read the failing check. |
 | Handoffs no longer listed | The engine is reading a different root. Run `config` and compare it with where your handoffs live; set `HANDOFFS_ROOT` if needed. |
 | Configuration was overwritten | `handoff.config.json` is preserved, but a manual copy step can still overwrite it. Restore your backup. |

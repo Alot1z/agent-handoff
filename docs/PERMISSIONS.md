@@ -129,7 +129,7 @@ an approved workspace wherever it points.
 4. Test one decision without executing it:
 
 ```
-node tools/runtime-engine.mjs evaluate --risk R2 --target repo-upstream/README.md --json
+node tools/runtime-engine.mjs evaluate --risk R2 --target README.md --json
 ```
 
 5. Confirm what the runtime actually loaded:

@@ -36,6 +36,7 @@ node tools/handoff.mjs verify <id-prefix>
 | understand how the pieces fit | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | look up a command, flag or exit code | [CLI.md](CLI.md) |
 | know exactly what a handoff folder holds | [FORMAT.md](FORMAT.md) |
+| see captured sessions, and check them | [SESSIONS.md](SESSIONS.md) |
 | fix something that is not working | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
 | feed it a transcript from your own tool | [INTEGRATION.md](INTEGRATION.md) and [../refs/ADAPTERS.md](https://github.com/Alot1z/agent-handoff/blob/main/refs/ADAPTERS.md) |
 | understand what the hashes prove | [PROVENANCE.md](PROVENANCE.md) |
@@ -50,6 +51,7 @@ node tools/handoff.mjs verify <id-prefix>
 | [ARCHITECTURE.md](ARCHITECTURE.md) | The layers, the data flow, the store root, the write-safety discipline, the boundaries |
 | [CLI.md](CLI.md) | Every executable, verb, flag, exit code, environment variable and file written |
 | [FORMAT.md](FORMAT.md) | Handoff folder layout, every file in it, the manifest and the schemas |
+| [SESSIONS.md](SESSIONS.md) | Session index: a sample store, its captured sessions, and how to verify and re-render them |
 | [INTEGRATION.md](INTEGRATION.md) | Embedding the engine, configuration and environment, CI and pipeline use |
 | [LEVEL4.md](LEVEL4.md) | Dynamic runtime layer: runtime verbs, gates and promotion |
 | [LEVEL5.md](LEVEL5.md) | Collaborative dispatch: routing a handoff to another agent |

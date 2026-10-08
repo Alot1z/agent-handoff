@@ -21,8 +21,14 @@ jobs:
       # lockfile to reproduce: the suite runs against the checkout as-is.
       - name: Test suite
         run: node tools/handoff.test.mjs
+      # The runtime layer acts on a STORE, so the smoke test gives it one. It used to run
+      # `agent-handoff.mjs list`, which is not a verb of that tool at all (the verbs are auto,
+      # verify-gate, promote, merge, federated-merge, dispatch, self-improve, index), so this
+      # step exited 2 and every CI run on main was red.
       - name: Runtime layer responds
-        run: node tools/agent-handoff.mjs list
+        run: |
+          HANDOFFS_ROOT="${RUNNER_TEMP}/runtime-store" node tools/handoff.mjs build --source tests/fixtures/minimal-transcript.jsonl --project ci
+          HANDOFFS_ROOT="${RUNNER_TEMP}/runtime-store" node tools/agent-handoff.mjs index
       - name: Installer help
         run: node install/install.mjs --help
 
@@ -37,7 +43,7 @@ jobs:
             const required = ['SKILL.md', 'README.md', 'CHANGELOG.md', 'LICENSE', 'package.json', 'skill.json',
               'tools/handoff.mjs', 'tools/agent-handoff.mjs',
               'docs/index.md', 'docs/INSTALL.md', 'docs/CLI.md', 'docs/ARCHITECTURE.md',
-              'docs/TROUBLESHOOTING.md', 'docs/CHANGELOG.md'];
+              'docs/TROUBLESHOOTING.md', 'docs/CHANGELOG.md', 'docs/SESSIONS.md'];
             const missing = required.filter(f => !fs.existsSync(f));
             if (missing.length) { console.error('Missing: ' + missing.join(', ')); process.exit(1); }
             for (const f of ['package.json', 'skill.json', 'handoff.config.schema.json', 'schemas/handoff.schema.json']) {
@@ -50,3 +56,9 @@ jobs:
       # that leaves docs/, renders fine on GitHub and 404s for a reader of the documentation.
       - name: Documentation is complete and linkable
         run: node .github/scripts/check-docs.mjs
+
+      # docs/SESSIONS.md is generated FROM a real store, so it is checked the same way the
+      # changelog is: a store edit without a page edit fails here instead of publishing a
+      # table that no longer matches what the engine can read.
+      - name: Session index matches its store
+        run: node .github/scripts/build-sessions-index.mjs --check

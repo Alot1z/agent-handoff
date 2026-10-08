@@ -113,8 +113,10 @@ Node 18/20/22. GitHub Actions workflows are under `.github/workflows/`.
 
 ## Offline use
 
-The engine makes no network requests. The installer downloads a release archive and therefore needs
-network access once; after that the installed skill is offline.
+The engine makes no network requests. The installer is the one component that reaches the
+network: run from a checkout or an unpacked archive it copies the files beside it, and run as the
+published package it downloads that version's archive from this repository. Either way the
+network is needed once, while installing; after that the installed skill is offline.
 
 ## MCP
 

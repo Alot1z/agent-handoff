@@ -1,138 +1,159 @@
 # Acceptance Manifest
-# Version 1.0 — agent-handoff acceptance tests
+# Version 1.1 — agent-handoff acceptance tests
+#
+# Every `command` below is a shell command: run it from the repository root and compare the
+# exit code, stdout and stderr with what the entry claims. There is no bundled runner — the
+# suite (node tools/handoff.test.mjs) is what CI executes, and this manifest is the readable
+# list of what the shipped tree promises.
+#
+# Version 1.0 described the DEVELOPMENT tree: it listed docs that only exist there, scanned a
+# directory only the development tree has, and asserted two behaviours the shipped CLI does
+# not have (`--help` exiting 0, `list` finding sessions in an empty store). Every entry was
+# re-run against a clean checkout, and each expectation below is one that was observed.
 
-version: "1.0"
+version: "1.1"
 
 # Test environment
 environment:
   runtime: "node"
   runtime_version: ">=18.0.0"
   working_directory: "."
-  temp_dir: "${TEMP_DIR}"
 
 # Placeholder resolver
 placeholders:
   CLI: "node tools/handoff.mjs"
   BUILD_COMMAND: "node tools/handoff.mjs"
-  TEST_COMMAND: "node tools/handoff.test.mjs || echo 'no tests'"
+  RUNTIME: "node tools/agent-handoff.mjs"
+  TEST_COMMAND: "node tools/handoff.test.mjs"
   PROJECT_ROOT: "."
-  WORKSPACE: "."
-  TEMP_DIR: "${TEMP}"
 
 # Tests
 tests:
-  # A — CLI availability
+  # A — CLI availability. The engine reports its command list on stderr and exits 2 when it is
+  # given no command; there is no `--help` verb.
   - id: cli-availability
-    purpose: "CLI can start and provide help"
-    command: "${CLI} --help"
+    purpose: "CLI starts with no arguments and states its commands"
+    command: "${CLI}"
     working_directory: "${PROJECT_ROOT}"
-    expected_exit_code: 0
-    expected_stdout:
-      - "usage"
-      - "build"
+    expected_exit_code: 2
+    expected_stderr:
+      - "commands:"
     forbidden_effects: []
 
-  # B — Capability discovery
+  # B — Capability discovery. The registry probes what the machine can actually do.
   - id: capability-discovery
-    purpose: "Capability registry discovers baseline capability"
-    command: "${CLI} list"
+    purpose: "Capability registry reports the capability it can probe"
+    command: "node tools/capability-registry.mjs check --registry capability-registry.json"
     working_directory: "${PROJECT_ROOT}"
     expected_exit_code: 0
     expected_stdout:
-      - "handoff"
+      - "capability-registry: OK"
     forbidden_effects: []
 
-  # C — Permission denial
+  # C — Permission denial. A `denied_roots` entry outranks an approved workspace, so the
+  # decision is DENIED and the exit code is 3. The probe policy is written to the OS temp
+  # directory and removed in the same command, so nothing is left in the tree.
   - id: permission-denial
-    purpose: "Unauthorized operation is denied"
-    # This test verifies that reading secrets path is denied
-    # Implementation: attempt to read a path outside workspace
-    command: "node -e \"const fs=require('fs'); try { fs.readFileSync(process.env.USERPROFILE+'/secret-test.txt', 'utf8'); console.log('FAIL: should have been denied'); } catch(e) { console.log('PASS: access denied as expected'); }\" "
+    purpose: "A denied root is refused before anything executes"
+    command: >
+      node -e "const fs=require('fs'),os=require('os'),p=require('path'),{spawnSync}=require('child_process');
+      const f=p.join(os.tmpdir(),'ah-acceptance-deny.json');
+      fs.writeFileSync(f,JSON.stringify({schema_version:'1.0-permission-policy',approved_workspaces:['.'],denied_roots:['README.md'],grants:{READ_ONLY:'allow'},risk_to_level:{R0:'READ_ONLY'}}));
+      const r=spawnSync(process.execPath,['tools/runtime-engine.mjs','evaluate','--policy',f,'--risk','R0','--target','README.md'],{encoding:'utf8'});
+      process.stdout.write(r.stdout); fs.unlinkSync(f); process.exit(r.status)"
     working_directory: "${PROJECT_ROOT}"
-    expected_exit_code: 0
+    expected_exit_code: 3
     expected_stdout:
-      - "PASS"
+      - "DENIED_ROOT"
     forbidden_effects: []
 
-  # D — Safe execution
+  # D — Safe execution: an irreversible operation is never silently allowed.
   - id: safe-execution
-    purpose: "Safe deterministic operation succeeds"
-    command: "${CLI} list"
+    purpose: "An irreversible risk class needs authorization rather than proceeding"
+    command: "node tools/runtime-engine.mjs evaluate --risk R4 --target README.md"
     working_directory: "${PROJECT_ROOT}"
-    expected_exit_code: 0
-    expected_stdout: []
-    expected_stderr: []
-    expected_artifacts: []
+    expected_exit_code: 4
+    expected_stdout:
+      - "NEEDS_AUTH"
     forbidden_effects: []
 
-  # E — Verification
-  - id: verification
-    purpose: "Handoff engine produces valid output"
-    # Create a handoff and verify it
+  # E — Handoff creation with an explicit session id.
+  - id: handoff-creation
+    purpose: "A handoff is created from the shipped fixture"
     command: |
       ${CLI} build --source tests/fixtures/minimal-transcript.jsonl --harness test --project acceptance-test --session test-session
     working_directory: "${PROJECT_ROOT}"
     expected_exit_code: 0
     expected_stdout:
-      - "built"
+      - "handoff: built"
     expected_artifacts:
       - "projects/acceptance-test/test-session/HANDOFF.md"
+      - "projects/acceptance-test/test-session/HANDOFF.summary.json"
+      - "projects/acceptance-test/test-session/HANDOFF.llm.json"
+      - "projects/acceptance-test/test-session/timeline.jsonl"
+      - "projects/acceptance-test/test-session/TOOLS.md"
       - "projects/acceptance-test/test-session/manifest.json"
     forbidden_effects: []
 
-  # F — Handoff creation
-  - id: handoff-creation
-    purpose: "Handoff can be created"
+  # F — A second session, to prove sessions are addressed by id and not by a single slot.
+  - id: session-addressing
+    purpose: "A second session lands beside the first, under its own id"
     command: |
       ${CLI} build --source tests/fixtures/minimal-transcript.jsonl --harness test --project acceptance-test --session handoff-create-test
     working_directory: "${PROJECT_ROOT}"
     expected_exit_code: 0
-    expected_stdout: []
     expected_artifacts:
       - "projects/acceptance-test/handoff-create-test/HANDOFF.md"
     forbidden_effects: []
 
-  # G — Handoff validation
+  # G — Handoff validation: the manifest hash, the timeline length and the machine payload.
   - id: handoff-validation
-    purpose: "Handoff validates schema"
-    command: |
-      ${CLI} verify acceptance-test/handoff-create
+    purpose: "The created handoff verifies against its own manifest"
+    command: "${CLI} verify handoff-create-test"
     working_directory: "${PROJECT_ROOT}"
     expected_exit_code: 0
     expected_stdout:
       - "PASS"
     forbidden_effects: []
 
-  # H — Resume
+  # H — Reload: the brief a fresh agent reads is printable and names its objective.
   - id: resume
-    purpose: "Handoff can be reloaded and resumed"
-    # This is a conceptual test — actual resume requires runtime implementation
-    command: "echo 'Resume test: handoff reload concept validated'"
+    purpose: "A captured session can be reloaded and read back"
+    command: "${CLI} show handoff-create-test"
     working_directory: "${PROJECT_ROOT}"
     expected_exit_code: 0
     expected_stdout:
-      - "validated"
+      - "Objective (verbatim)"
     forbidden_effects: []
 
-  # I — Failure recovery
+  # I — Failure recovery: malformed input is a clean nonzero exit, not a partial session.
   - id: failure-recovery
-    purpose: "Controlled failure is handled"
-    # Test that invalid input produces clean error
+    purpose: "A missing source fails cleanly"
     command: "${CLI} build --source nonexistent-file.jsonl"
     working_directory: "${PROJECT_ROOT}"
-    expected_exit_code: "non-zero"
-    expected_stdout: []
+    expected_exit_code: 2
+    expected_stderr:
+      - "source not found"
     forbidden_effects: []
 
-  # J — Clean checkout
+  # J — Clean checkout: the shipped suite is hermetic and is the machine-checkable oracle.
   - id: clean-checkout
-    purpose: "Fresh checkout can build and run MVP"
-    # This requires fresh clone — skip in normal test run
-    command: "echo 'Clean checkout test: requires fresh clone environment'"
+    purpose: "The shipped suite passes from a checkout with no state"
+    command: "${TEST_COMMAND}"
     working_directory: "${PROJECT_ROOT}"
     expected_exit_code: 0
     expected_stdout:
-      - "requires fresh clone"
+      - "fail 0"
+    forbidden_effects: []
+
+  # K — The sample store and the page rendered from it agree.
+  - id: session-index
+    purpose: "The session index page matches the sample store"
+    command: "node .github/scripts/build-sessions-index.mjs --check"
+    working_directory: "${PROJECT_ROOT}"
+    expected_exit_code: 0
+    expected_stdout:
+      - "OK"
     forbidden_effects: []
 
 # Fixtures
@@ -143,30 +164,41 @@ fixtures:
     content: |
       {"seq":0,"ts":"2026-10-08T10:00:00Z","kind":"human","text":"Test task"}
       {"seq":1,"ts":"2026-10-08T10:00:05Z","kind":"ai","text":"I'll help with that."}
+  - id: sample-store
+    path: "examples/sessions/INDEX.json"
+    purpose: "Sample handoff store the session index page is rendered from"
 
 # Verification
 verification:
   - id: artifact-presence
-    purpose: "Required artifacts exist"
+    purpose: "Required artifacts exist in the shipped tree"
     artifacts:
-      - "docs/PREFLIGHT.md"
-      - "docs/FIRST-RUN.md"
-      - "docs/PROGRESS.md"
-      - "docs/TODO.md"
-      - "docs/EXECUTION-STATE.json"
-      - "docs/INPUT-CONTRACT.md"
-      - "docs/PERMISSION-BOUNDARY.md"
-      - "docs/CANONICAL-SOURCES.md"
-      - "docs/PLACEHOLDERS.md"
-      - "docs/REFERENCES.md"
+      - "SKILL.md"
+      - "README.md"
+      - "CHANGELOG.md"
+      - "LICENSE"
+      - "package.json"
+      - "skill.json"
+      - "install/install.mjs"
+      - "docs/index.md"
+      - "docs/INSTALL.md"
+      - "docs/CLI.md"
+      - "docs/ARCHITECTURE.md"
+      - "docs/SESSIONS.md"
       - "schemas/handoff.schema.json"
+      - "examples/sessions/INDEX.json"
 
   - id: no-secrets
-    purpose: "No secrets in public files"
+    purpose: "No secrets in the published files"
     scan_paths:
-      - "repo-upstream/"
+      - "."
+    # This manifest names the patterns it forbids, so a scan of the whole tree matches its own
+    # list. That one file is excluded; every other published file is in scope.
+    exclude:
+      - "tests/acceptance/acceptance.yaml"
     forbidden_patterns:
       - "ghp_"
+      - "npm_"
       - "sk-"
       - "password="
       - "token="

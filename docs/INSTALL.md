@@ -144,7 +144,8 @@ Use the release archive when you cannot run `npx`.
 
 A complete installation contains `SKILL.md`, `skill.json`, the manifest JSON files,
 `tools/` (the engine and its runtime), `tools/lib/`, `schemas/`, `refs/`, `templates/`, `docs/`,
-`src/`, and `tests/`.
+and `tests/`. That list is not a description: it is the installer's manifest, and a run that
+cannot resolve any entry fails rather than reporting an incomplete installation as a success.
 
 ## Handoff storage is separate
 
@@ -164,8 +165,9 @@ By default the engine stores handoff data under its own root, inside the install
 |---|---|
 | `Cannot write to <dir>` | The target is not writable. Pick another location with `--path`, or fix permissions. |
 | `Not installed at <dir>` | `update` and `verify` require an existing installation. Run `install` first. |
-| `Source file not found: <file>` | The skill tree next to the installer is incomplete. Re-fetch the package. |
-| `Cannot extract zip` | `unzip` is missing. Install it, or extract the archive with your file manager. |
+| `Incomplete install: <n> of <m> file(s) missing — …` | The tree the installer reads from is not a complete one. Install from a fresh clone, or from a freshly downloaded archive. |
+| `no published release found — fetching the main branch` | Not an error: `--version latest` found no release object, so the archive of `main` is used instead. Pass `--version <x>` to install a released tag. |
+| `Cannot extract the archive (tar exited …)` | `tar` is missing, or the download did not arrive intact. The message prints the `curl` and `tar` commands that do the same job by hand. |
 | The wrong root was chosen | Run `where` to see the reason, then set `AGENT_HANDOFF_GLOBAL_DIR` or pass `--path`. |
 | `remove` did nothing | Removal asks for confirmation, and refuses in a non-interactive shell. Pass `--force`. |
 | Verification fails | The output names the failing check. Fix it, or reinstall with `--force`. |

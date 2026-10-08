@@ -15,16 +15,58 @@ and has its own
 
 ## [Unreleased]
 
-Add entries under the headings below as changes land:
+Add entries under the matching heading as changes land.
 
-```
 ### Added
+
+- **[Session index](https://alot1z.github.io/agent-handoff/SESSIONS.html)** (`docs/SESSIONS.md`):
+  a page rendered from a real handoff store, listing the captured sessions in
+  `examples/sessions/` with their project, harness, turn count, revision, manifest hash and
+  integrity verdict, plus the commands that reproduce each check. The sample store is built by
+  the engine from the two transcripts this repository ships, and
+  `.github/scripts/build-sessions-index.mjs --check` fails the build when the page and the store
+  disagree.
+- The installer is published to npm from the release workflow: a tag publishes `install/` as
+  `agent-handoff-install`, skips a version npm already has, and reports — without failing the
+  release — when `NPM_TOKEN` is not configured.
+
 ### Changed
-### Deprecated
-### Removed
+
+- `npx agent-handoff-install` now installs the skill as documented. The published package
+  carries `install/` alone, so the installer downloads the archive for the requested version and
+  copies from it. It previously looked for the skill files beside itself, found none, and
+  reported success while installing nothing.
+- The clean-checkout suite builds its fixture from the shipped projection rather than the
+  development tree, which is what let the installer's broken source paths pass every local test.
+
 ### Fixed
-### Security
-```
+
+- The installer lost fourteen files whenever it ran outside the development tree: `README.md`,
+  `LICENSE` and the twelve guides were addressed under `repo-upstream/<path>`, a directory only
+  the development tree has. Sources are written in the shipped tree's terms and resolved against
+  both layouts, and an install that cannot resolve a source now fails with the missing paths
+  instead of warning and continuing.
+- CI failed on every run: the runtime-layer smoke test ran `agent-handoff.mjs list`, which is not
+  a verb of that tool (it exits 2). The step builds a handoff into a scratch store and runs
+  `index`, a verb that exists.
+- The shipped version disagreed across files: `SKILL.md` said 2.0.0 while `skill.json` and
+  `package.json` said 2.0.1, and the installer carried its own 2.0.0 constant, so every install
+  reported the previous version. `SKILL.md` is now the single source of truth, the installer
+  reads it, and the suite asserts the two agree.
+- `install/package.json` pointed `repository` at a different repository from the one serving the
+  package; it now names this repository, with `homepage` and `bugs`.
+- `handoff.config.schema.json` declared its `$id` under a path that does not serve the schema.
+- `examples/demo/example-usage.md` addressed the engine as `../../../tools/handoff.mjs`, one
+  directory above the repository root, so every command in it failed when pasted.
+- `tests/acceptance/acceptance.yaml` described the development tree: it listed documents that
+  are not published, scanned a directory that is not published, and asserted two behaviours the
+  shipped CLI does not have (`--help` exiting 0, `list` succeeding on an empty store). Every
+  entry was re-run against a clean checkout and now states what was observed.
+- Documentation stopped describing files that are not published: `src/` was listed as part of an
+  installation in `INSTALL.md`, `UNINSTALL.md` and `UPGRADE.md`, and documented as a repository
+  directory in `CONTRIBUTING.md`.
+- `ARCHITECTURE.md` claimed nothing in the repository makes a network call, which stopped being
+  true once the installer fetched archives.
 
 ## [2.0.1] — 2026-10-09
 

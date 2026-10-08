@@ -6,7 +6,7 @@ This example shows how to use agent-handoff with the demo transcript.
 
 ```bash
 cd examples/demo
-node ../../../tools/handoff.mjs build \
+node ../../tools/handoff.mjs build \
   --source transcript.jsonl \
   --harness claude-code \
   --project demo-project \
@@ -37,13 +37,13 @@ INDEX.json
 ## Step 2: View the handoff
 
 ```bash
-node ../../../tools/handoff.mjs show <session-id>
+node ../../tools/handoff.mjs show <session-id>
 ```
 
 ## Step 3: Verify integrity
 
 ```bash
-node ../../../tools/handoff.mjs verify <session-id>
+node ../../tools/handoff.mjs verify <session-id>
 ```
 
 Should output: `PASS <session-id> [...]`
@@ -51,7 +51,7 @@ Should output: `PASS <session-id> [...]`
 ## Step 4: List all handoffs
 
 ```bash
-node ../../../tools/handoff.mjs list
+node ../../tools/handoff.mjs list
 ```
 
 ## Step 5: Rebuild (update)
@@ -59,7 +59,7 @@ node ../../../tools/handoff.mjs list
 If you add more turns to the transcript and rebuild:
 
 ```bash
-node ../../../tools/handoff.mjs build \
+node ../../tools/handoff.mjs build \
   --source transcript.jsonl \
   --harness claude-code \
   --project demo-project
@@ -79,7 +79,7 @@ By default, handoffs are stored in `handoffs/` relative to the skill installatio
 You can override this with the `HANDOFFS_ROOT` environment variable:
 
 ```bash
-HANDOFFS_ROOT=./my-handoffs node ../../../tools/handoff.mjs build --source transcript.jsonl
+HANDOFFS_ROOT=./my-handoffs node ../../tools/handoff.mjs build --source transcript.jsonl
 ```
 
 Or configure in `handoff.config.json`:

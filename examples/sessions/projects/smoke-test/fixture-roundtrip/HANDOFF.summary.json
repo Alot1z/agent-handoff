@@ -1,0 +1,35 @@
+{
+  "schema_version": "2.0.0-summary",
+  "session": {
+    "id": "fixture-roundtrip",
+    "harness": "codex",
+    "model": "gpt-5-codex"
+  },
+  "project": "smoke-test",
+  "generated_at": "2026-10-08T22:53:03.964Z",
+  "objective": "Test task",
+  "state_now": "I'll help with that.",
+  "open_loops": [],
+  "evidence_class": "OBSERVED",
+  "counts": {
+    "USER": 1,
+    "AGENT": 1,
+    "THOUGHT": 0,
+    "TOOL": 0
+  },
+  "artifacts": {
+    "full_payload": "HANDOFF.llm.json",
+    "timeline": "timeline.jsonl",
+    "tool_calls": "TOOLS.md"
+  },
+  "provenance": {
+    "sources": [
+      "tests/fixtures/minimal-transcript.jsonl"
+    ],
+    "raw_sha256": "21e3680b91594304affe49dfbfd6f6be7beff5e008a522ea14e3d344631264e8",
+    "manifest_sha256": "a81d076e3334b8341f2829d0f38daf2cdbaf667269a9909dc523797c74e46ce5",
+    "revision": 1,
+    "watermark": 1,
+    "total_turns": 2
+  }
+}

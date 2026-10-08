@@ -1,0 +1,35 @@
+{
+  "schema_version": "2.0.0-summary",
+  "session": {
+    "id": "typescript-project-setup",
+    "harness": "claude-code",
+    "model": "claude-3-5-sonnet"
+  },
+  "project": "demo",
+  "generated_at": "2026-10-08T22:53:03.865Z",
+  "objective": "Help me set up a new Node.js project with TypeScript",
+  "state_now": "Done! Your TypeScript project is set up. Here's what I created:\n\n- package.json with dependencies\n- tsconfig.json with strict mode\n- src/index.ts with a hello world\n\nRun `npm run build` to compile, or `npx ts-node src/index.ts` to run directly.",
+  "open_loops": [],
+  "evidence_class": "OBSERVED",
+  "counts": {
+    "USER": 2,
+    "AGENT": 3,
+    "THOUGHT": 0,
+    "TOOL": 6
+  },
+  "artifacts": {
+    "full_payload": "HANDOFF.llm.json",
+    "timeline": "timeline.jsonl",
+    "tool_calls": "TOOLS.md"
+  },
+  "provenance": {
+    "sources": [
+      "examples/demo/transcript.jsonl"
+    ],
+    "raw_sha256": "c21f62716973de4f29251076f3805bbcce0e779749ddc61c91bf84b62c0947c7",
+    "manifest_sha256": "141e232eb2ad668f59d746828517e646a5cbe2bc914dd976df3c43c209214d3c",
+    "revision": 1,
+    "watermark": 10,
+    "total_turns": 11
+  }
+}
