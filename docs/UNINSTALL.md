@@ -9,7 +9,7 @@ Uninstalling removes the skill files. Your handoffs and your configuration stay 
 ## Quick uninstall
 
 ```bash
-npx agent-handoff-install --remove
+npx agents-handoff --remove
 ```
 
 Removal asks for confirmation first:
@@ -28,7 +28,7 @@ Answer `y` to proceed. In a non-interactive shell the prompt is skipped and noth
 the installer prints `Non-interactive mode, use --force to skip confirmation` instead.
 
 ```bash
-npx agent-handoff-install --remove --force
+npx agents-handoff --remove --force
 ```
 
 ## Options
@@ -99,7 +99,7 @@ node "<install-path>/tools/handoff.mjs" config
 ## After uninstalling
 
 ```bash
-npx agent-handoff-install --list
+npx agents-handoff --list
 ```
 
 The removed location should no longer appear. Handoff data that was kept still exists on disk

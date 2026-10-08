@@ -12,7 +12,7 @@ anything you added next to them.
 Confirm what is installed:
 
 ```bash
-npx agent-handoff-install --list
+npx agents-handoff --list
 ```
 
 `--list` prints each installed location with its version and the number of manifest files
@@ -32,7 +32,7 @@ leaves that file alone.
 ## Upgrade with the installer
 
 ```bash
-npx agent-handoff-install --update
+npx agents-handoff --update
 ```
 
 `--update` requires an existing installation; without one it exits with
@@ -46,8 +46,8 @@ overwrite the files of the same name. Files that are not part of the installatio
 To update into a specific location or version:
 
 ```bash
-npx agent-handoff-install --update --location project
-npx agent-handoff-install --update --version 2.0.0
+npx agents-handoff --update --location project
+npx agents-handoff --update --version 2.0.0
 ```
 
 `--version` installs the version you ask for: the tree beside the installer when there is one
@@ -89,7 +89,7 @@ them.
 ## After upgrading
 
 ```bash
-npx agent-handoff-install --verify
+npx agents-handoff --verify
 node "<install-path>/tools/handoff.mjs" config
 node "<install-path>/tools/handoff.mjs" list
 ```
@@ -118,7 +118,7 @@ upgrade damaged the folder.
 
 1. Restore the previous version's skill files: extract that version's release archive and copy
    the skill files over the installation, as in the manual upgrade above.
-2. Or reinstall the files that ship with the installer: `npx agent-handoff-install --force`.
+2. Or reinstall the files that ship with the installer: `npx agents-handoff --force`.
 3. Restore handoffs from your backup if you made one, and confirm with `--verify` and
    `handoff.mjs list`.
 

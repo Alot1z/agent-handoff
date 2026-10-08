@@ -6,7 +6,7 @@ description: >-
   session as a portable, sha256-proven handoff folder a fresh agent can continue
   from with zero shared memory, with versioned contracts, an evidence gate, and
   backup/verify/rollback on every write. Zero runtime dependencies, no network.
-version: 2.0.1
+version: 2.0.2
 domain: orchestration
 tokens: 900
 allowed-tools: Bash(node:*), Read, Edit, Write

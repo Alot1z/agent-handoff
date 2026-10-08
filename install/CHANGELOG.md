@@ -1,11 +1,11 @@
-# Changelog — agent-handoff-install
+# Changelog — agents-handoff
 
 The installer is a separate package from the skill. It follows the same
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format and Semantic Versioning.
 
 ## [1.1.0] — 2026-10-09
 
-First release published to npm. `npx agent-handoff-install` now installs the skill on a
+First release published to npm. `npx agents-handoff` now installs the skill on a
 machine that has neither a checkout nor an unpacked archive.
 
 ### Added

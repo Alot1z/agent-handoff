@@ -12,14 +12,14 @@ were development builds and were never published, so they are not listed.
 
 The version in [package.json](https://github.com/Alot1z/agent-handoff/blob/main/package.json)
 and [skill.json](https://github.com/Alot1z/agent-handoff/blob/main/skill.json) is the release
-version. The version of the separate installer package is in
-[install/package.json](https://github.com/Alot1z/agent-handoff/blob/main/install/package.json)
-and has its own
-[changelog](https://github.com/Alot1z/agent-handoff/blob/main/install/CHANGELOG.md).
+version, and it is the version published to npm: the repository root is the
+[`agents-handoff`](https://www.npmjs.com/package/agents-handoff) package.
 
 ## [Unreleased]
 
 Add entries under the matching heading as changes land.
+
+## [2.0.2] - 2026-10-09
 
 ### Added
 
@@ -30,16 +30,19 @@ Add entries under the matching heading as changes land.
   the engine from the two transcripts this repository ships, and
   `.github/scripts/build-sessions-index.mjs --check` fails the build when the page and the store
   disagree.
-- The installer is published to npm from the release workflow: a tag publishes `install/` as
-  `agent-handoff-install`, skips a version npm already has, and reports — without failing the
-  release — when `NPM_TOKEN` is not configured.
+- The skill is published to npm as
+  [`agents-handoff`](https://www.npmjs.com/package/agents-handoff), from the repository root,
+  and the release workflow publishes it on a tag: it skips a version npm already has, and
+  reports — without failing the release — when `NPM_TOKEN` is not configured. The package
+  carries the skill tree, so `npx agents-handoff` installs with no download.
+- `npm test`, `npm run check:docs` and `npm run check:session-index` are wired into
+  `prepublishOnly`, so a tree whose suite, links or session index are stale cannot be published.
 
 ### Changed
 
-- `npx agent-handoff-install` now installs the skill as documented. The published package
-  carries `install/` alone, so the installer downloads the archive for the requested version and
-  copies from it. It previously looked for the skill files beside itself, found none, and
-  reported success while installing nothing.
+- `npx agents-handoff` now installs the skill as documented. It previously looked for the skill
+  files beside itself, found none, and reported success while installing nothing; a bare copy of
+  `install/` still falls back to downloading the archive for the requested version.
 - The clean-checkout suite builds its fixture from the shipped projection rather than the
   development tree, which is what let the installer's broken source paths pass every local test.
 
@@ -131,7 +134,7 @@ documentation site.
 - **Capability probes** (`tools/capability-registry.mjs`): `file-exists`, `dir-writable` and
   `command` probes that report `healthy` / `unhealthy` / `unknown` with the evidence behind
   each verdict.
-- **Installer** (`install/`, package `agent-handoff-install`): `install`, `update`, `remove`,
+- **Installer** (`install/`, package `agents-handoff`): `install`, `update`, `remove`,
   `verify`, `list`, `where`, targeting a resolved global root, `./local/skills/agent-handoff`,
   or `./skills/agent-handoff`.
 - **Documentation site** at <https://alot1z.github.io/agent-handoff/>, built by GitHub Pages

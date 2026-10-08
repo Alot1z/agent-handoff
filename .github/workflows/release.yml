@@ -41,15 +41,13 @@ jobs:
           files: agent-handoff-${{ github.ref_name }}.zip
           generate_release_notes: true
 
-      # The installer is its own npm package (install/package.json), because it is what a user
-      # runs BEFORE the skill exists on their machine: `npx agent-handoff-install`. Only
-      # install/ is published — it fetches the skill itself from this repository's tag.
+      # The repository root IS the published package (`agents-handoff` in package.json), and its
+      # `files` list carries the skill tree, so `npx agents-handoff` installs without a download.
       # Add NPM_TOKEN under Settings → Secrets and variables → Actions to enable this step;
       # without it the step says so and the release still succeeds, so a missing secret cannot
       # turn a good release red. Re-publishing a version npm already has is skipped rather than
-      # failed, and a new version means bumping install/package.json in the same commit.
-      - name: Publish the installer to npm
-        working-directory: install
+      # failed, and a new version means bumping package.json and SKILL.md in the same commit.
+      - name: Publish to npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
@@ -60,9 +58,9 @@ jobs:
             exit 0
           fi
           VERSION=$(node -p "require('./package.json').version")
-          if npm view "agent-handoff-install@${VERSION}" version >/dev/null 2>&1; then
-            echo "agent-handoff-install@${VERSION} is already on npm — nothing to publish."
+          if npm view "agents-handoff@${VERSION}" version >/dev/null 2>&1; then
+            echo "agents-handoff@${VERSION} is already on npm — nothing to publish."
             exit 0
           fi
           npm publish --access public
-          echo "Published agent-handoff-install@${VERSION}"
+          echo "Published agents-handoff@${VERSION}"

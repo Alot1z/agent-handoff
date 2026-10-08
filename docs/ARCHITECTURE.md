@@ -154,7 +154,7 @@ docs/                      this documentation and the Pages site
 refs/                      reference material: adapters, protocol, roles, brief checklist
 templates/                 handoff templates and the LLM payload schema
 schemas/                   the portable handoff payload schema
-install/                   the npx installer package
+install/                   the installer behind the agents-handoff npx package
 tests/                     acceptance fixture and a minimal transcript
 ```
 

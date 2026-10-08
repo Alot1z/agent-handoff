@@ -449,6 +449,52 @@ test('installer: every manifest source resolves here, and the fallback version m
     'installer fallback version must equal SKILL.md version');
 });
 
+// The published identity is one name in one manifest, and every page a user reads has to agree
+// with it. Two drifts are possible here and both are silent until a stranger runs npx: a rename
+// that misses a guide, and a `files` list that drops a directory the installer copies from —
+// which would install an incomplete skill while reporting success.
+test('package: the published name, the packed file list and the docs agree', (t) => {
+  if (!fs.existsSync(INSTALLER_SRC)) {
+    return t.skip('no install/ in this tree — an installed copy omits the installer by design');
+  }
+  const pkg = JSON.parse(fs.readFileSync(path.join(REPO, 'package.json'), 'utf8'));
+  assert.equal(pkg.name, 'agents-handoff', 'the published package name');
+  const skillMd = fs.readFileSync(path.join(REPO, 'SKILL.md'), 'utf8');
+  assert.equal(pkg.version, /^version:\s*(\S+)/m.exec(skillMd)[1],
+    'package.json version must equal SKILL.md version');
+  assert.ok(!pkg.private, 'the root package must be publishable — install/ is the private one');
+  for (const entry of pkg.files) {
+    const rel = entry.replace(/\/$/, '');
+    assert.ok(fs.existsSync(path.join(REPO, rel)), 'package.json files entry does not exist: ' + entry);
+  }
+  for (const [bin, target] of Object.entries(pkg.bin || {})) {
+    assert.ok(fs.existsSync(path.join(REPO, target)), 'bin ' + bin + ' points at a missing file: ' + target);
+  }
+
+  // What the installer copies has to be inside what npm packs, or the published package installs
+  // a partial skill. Each manifest source is covered by a `files` entry for itself or its dir.
+  const src = fs.readFileSync(INSTALLER_SRC, 'utf8');
+  const list = src.match(/const SKILL_FILES = \[([\s\S]*?)\n\];/);
+  const froms = [...list[1].matchAll(/from: '([^']+)'/g)].map((m) => m[1]);
+  const packed = pkg.files.map((f) => f.replace(/\/$/, ''));
+  for (const from of froms) {
+    assert.ok(packed.includes(from) || packed.includes(from.split('/')[0]),
+      'installer source is not in package.json files, so npm would not ship it: ' + from);
+  }
+
+  // The retired name must not survive anywhere a reader would follow it.
+  const retired = 'agent-handoff-install';
+  const readers = fs.readdirSync(path.join(REPO, 'docs'))
+    .filter((f) => f.endsWith('.md')).map((f) => path.join('docs', f));
+  readers.push('README.md', 'skill.json', path.join('install', 'README.md'), path.join('.github', 'workflows', 'release.yml'));
+  for (const rel of readers) {
+    const abs = path.join(REPO, rel);
+    if (!fs.existsSync(abs)) continue;
+    assert.ok(!fs.readFileSync(abs, 'utf8').includes(retired),
+      rel + ' still names the retired package ' + retired);
+  }
+});
+
 test('rebuild of identical source is idempotent (up-to-date, revision stable)', () => {
   const root = scratch();
   try {

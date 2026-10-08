@@ -13,7 +13,7 @@ dependencies; there is no build step and nothing to install to run them from a c
 | [`tools/agent-handoff.mjs`](https://github.com/Alot1z/agent-handoff/blob/main/tools/agent-handoff.mjs) | Runtime layer: acts on the state of the store. | `node tools/agent-handoff.mjs <verb>` |
 | [`tools/runtime-engine.mjs`](https://github.com/Alot1z/agent-handoff/blob/main/tools/runtime-engine.mjs) | Bounded execution: evaluates an operation against the policy before running it. | `node tools/runtime-engine.mjs <verb>` |
 | [`tools/capability-registry.mjs`](https://github.com/Alot1z/agent-handoff/blob/main/tools/capability-registry.mjs) | Health probes for declared capabilities. | `node tools/capability-registry.mjs <verb>` |
-| [`install/install.mjs`](https://github.com/Alot1z/agent-handoff/blob/main/install/install.mjs) | Installs, updates and removes the skill. | `npx agent-handoff-install <verb>` |
+| [`install/install.mjs`](https://github.com/Alot1z/agent-handoff/blob/main/install/install.mjs) | Installs, updates and removes the skill. | `npx agents-handoff <verb>` |
 
 Requires Node.js 18 or newer.
 
@@ -151,7 +151,7 @@ State is written to `<state>/capability-state.json`, where `<state>` is
 
 ## `install/install.mjs` — installer
 
-Published as `agent-handoff-install`. Location resolution is documented in
+Published as `agents-handoff`. Location resolution is documented in
 [INSTALL.md](INSTALL.md).
 
 | Verb | Effect |

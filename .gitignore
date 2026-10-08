@@ -68,3 +68,6 @@ test/fixtures/*.json
 # Personal config overrides
 config.local.json
 settings.local.json
+
+# npm pack artifacts
+*.tgz

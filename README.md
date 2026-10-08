@@ -18,8 +18,8 @@ that a fresh agent can continue from with zero shared memory.
 ## Install
 
 ```bash
-npx agent-handoff-install
-npx agent-handoff-install where     # show the resolved install root, and why it was chosen
+npx agents-handoff
+npx agents-handoff where     # show the resolved install root, and why it was chosen
 ```
 
 The installer resolves the global root instead of hard-coding one. The resolution order,

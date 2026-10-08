@@ -1,25 +1,41 @@
 {
-  "name": "agent-handoff",
-  "version": "2.0.1",
+  "name": "agents-handoff",
+  "version": "2.0.2",
   "description": "Write, verify, and hand off complete AI working sessions across any harness (Claude Code, Codex, DeepSeek Harness, plain JSONL or text logs). Cross-harness session capture with sha256 provenance and verified continuation.",
   "type": "module",
   "main": "tools/handoff.mjs",
   "bin": {
+    "agents-handoff": "./install/install.mjs",
     "agent-handoff": "./tools/handoff.mjs"
   },
   "files": [
+    "install/",
     "tools/",
     "templates/",
     "refs/",
+    "schemas/",
     "docs/",
+    "tests/",
     "CHANGELOG.md",
-    "SKILL.md"
+    "README.md",
+    "LICENSE",
+    "SKILL.md",
+    "skill.json",
+    "capability-registry.json",
+    "permission-policy.json",
+    "handoff.config.schema.json",
+    "handoff.config.example.json"
   ],
   "scripts": {
     "test": "node tools/handoff.test.mjs",
     "check:docs": "node .github/scripts/check-docs.mjs",
+    "check:session-index": "node .github/scripts/build-sessions-index.mjs --check",
+    "prepublishOnly": "node tools/handoff.test.mjs && node .github/scripts/check-docs.mjs && node .github/scripts/build-sessions-index.mjs --check",
     "verify": "node tools/handoff.mjs verify",
     "build": "node tools/handoff.mjs build"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "keywords": [
     "ai",
@@ -30,7 +46,10 @@
     "cross-harness",
     "provenance",
     "claude-code",
-    "codex"
+    "codex",
+    "installer",
+    "npx",
+    "skill"
   ],
   "author": "Alot1z",
   "license": "MIT",

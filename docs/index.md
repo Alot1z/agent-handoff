@@ -14,7 +14,7 @@ merges later turns into the same session instead of duplicating it.
 
 ```bash
 # 1. Install the skill
-npx agent-handoff-install
+npx agents-handoff
 
 # 2. Build a handoff from a transcript
 node tools/handoff.mjs build --source transcript.jsonl --project my-project

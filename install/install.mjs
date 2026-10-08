@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// agent-handoff-install - npx installer for the agent-handoff skill
+// agents-handoff - npx installer for the agent-handoff skill
 // Commands: install, update, remove, verify, list
 // Zero external dependencies, pure Node.js
 import fs from 'node:fs';
@@ -27,7 +27,7 @@ const API_LATEST = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/rele
 // `list` read back out of an installed copy. The literal below is only the fallback for the
 // run that has no tree beside it — the published package fetching an archive — and the suite
 // asserts it against SKILL.md, so a release that bumps one cannot leave the other behind.
-const FALLBACK_SKILL_VERSION = '2.0.1';
+const FALLBACK_SKILL_VERSION = '2.0.2';
 function skillVersion() {
   try {
     const md = fs.readFileSync(path.join(SOURCE_DIR, 'SKILL.md'), 'utf8');
@@ -262,7 +262,7 @@ async function latestTag() {
   if (typeof fetch === 'undefined') return null;
   try {
     const res = await fetch(API_LATEST, {
-      headers: { accept: 'application/vnd.github+json', 'user-agent': 'agent-handoff-install' },
+      headers: { accept: 'application/vnd.github+json', 'user-agent': 'agents-handoff' },
     });
     if (!res.ok) return null;
     const j = await res.json();
@@ -745,7 +745,7 @@ function listInstallations() {
   
   if (!foundAny) {
     log(`${C('yellow', 'No installations found.')}`);
-    log(`Install with: npx agent-handoff-install`);
+    log(`Install with: npx agents-handoff`);
   }
   
   return foundAny;
@@ -810,10 +810,10 @@ async function main() {
 
 function showHelp() {
   console.log(`
-${C('bold', 'agent-handoff-install')} - Install assistant for agent-handoff skill
+${C('bold', 'agents-handoff')} - Install assistant for agent-handoff skill
 
 ${C('bold', 'Usage:')}
-  npx agent-handoff-install <command> [options]
+  npx agents-handoff <command> [options]
 
 ${C('bold', 'Commands:')}
   install, i      Install the skill (default)
@@ -830,12 +830,12 @@ ${C('bold', 'Options:')}
   --force, -f     Skip confirmations, overwrite existing
 
 ${C('bold', 'Examples:')}
-  npx agent-handoff-install                      # Install to global
-  npx agent-handoff-install --location project   # Install to project
-  npx agent-handoff-install --update             # Update to latest
-  npx agent-handoff-install --remove --force     # Remove without asking
-  npx agent-handoff-install --verify              # Check installation
-  npx agent-handoff-install --list                # Show all installations
+  npx agents-handoff                      # Install to global
+  npx agents-handoff --location project   # Install to project
+  npx agents-handoff --update             # Update to latest
+  npx agents-handoff --remove --force     # Remove without asking
+  npx agents-handoff --verify              # Check installation
+  npx agents-handoff --list                # Show all installations
 
 ${C('bold', 'Locations:')}
   global   resolved, not hard-coded: an account-skill root that already holds
@@ -844,7 +844,7 @@ ${C('bold', 'Locations:')}
            id levels below it — <store>/<account-id>/<profile-id>/agent-handoff/ — so the
            store itself is not an install target.
            Override with AGENT_HANDOFF_GLOBAL_DIR, or target an exact path with --path.
-           See it resolved: npx agent-handoff-install where
+           See it resolved: npx agents-handoff where
   local    ./local/skills/agent-handoff
   project  ./skills/agent-handoff (only if in a git repo)
 

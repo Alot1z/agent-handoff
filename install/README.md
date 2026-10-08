@@ -1,11 +1,11 @@
-# agent-handoff-install
+# agents-handoff
 
 npx installer for the agent-handoff skill.
 
 ## Quick start
 
 ```bash
-npx agent-handoff-install
+npx agents-handoff
 ```
 
 ## Commands
@@ -32,25 +32,25 @@ npx agent-handoff-install
 
 ```bash
 # Install to global location
-npx agent-handoff-install
+npx agents-handoff
 
 # Install to project-local
-npx agent-handoff-install --location project
+npx agents-handoff --location project
 
 # Update to latest
-npx agent-handoff-install --update
+npx agents-handoff --update
 
 # Remove without confirmation
-npx agent-handoff-install --remove --force
+npx agents-handoff --remove --force
 
 # Verify installation
-npx agent-handoff-install --verify
+npx agents-handoff --verify
 
 # Show all installations
-npx agent-handoff-install --list
+npx agents-handoff --list
 
 # Show which global root was chosen, and why
-npx agent-handoff-install where
+npx agents-handoff where
 ```
 
 ## Locations
@@ -59,7 +59,7 @@ npx agent-handoff-install where
   `agent-handoff`, else `~/.agents/skills`, else any account-skill store found on this
   machine (`<store>/<account-id>/<profile-id>/agent-handoff/`), else `~/.agents/skills`,
   created on install. See it resolved:
-  `npx agent-handoff-install where`. Override with `AGENT_HANDOFF_GLOBAL_DIR`, or target an
+  `npx agents-handoff where`. Override with `AGENT_HANDOFF_GLOBAL_DIR`, or target an
   exact path with `--path`.
 - **local**: `./local/skills/agent-handoff/`
 - **project**: `./skills/agent-handoff/` (only detected if in a git repo)

@@ -18,11 +18,13 @@ later. It is a Node.js command-line skill with no runtime dependencies.
 ## Quick start
 
 ```bash
-npx agent-handoff-install
+npx agents-handoff
 ```
 
 The installer copies the skill files into the resolved global root, then reports how many files
-it copied. Confirm the installation:
+it copied. The published package carries the whole tree, so this needs no download; only a bare
+copy of `install/` falls back to fetching the release archive for the requested version.
+Confirm the installation:
 
 ```bash
 node "<install-path>/tools/handoff.mjs" config
@@ -63,7 +65,7 @@ skills there. The installer searches every store it can find and never assumes o
 Inspect the decision before installing anything:
 
 ```bash
-npx agent-handoff-install where
+npx agents-handoff where
 ```
 
 ```
@@ -112,7 +114,7 @@ The installer accepts both bare verbs and flag forms: `install`/`--install`, `up
 ## Verify an installation
 
 ```bash
-npx agent-handoff-install --verify
+npx agents-handoff --verify
 ```
 
 Verification runs three kinds of check:
