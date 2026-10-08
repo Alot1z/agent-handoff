@@ -1,5 +1,5 @@
 ---
-title: agent-handoff documentation
+title: agent-handoff
 ---
 
 # agent-handoff documentation
