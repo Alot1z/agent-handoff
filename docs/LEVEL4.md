@@ -4,8 +4,8 @@ title: Level 4 — the dynamic runtime layer
 
 # Level 4 — the dynamic runtime layer
 
-The engine ([handoff.mjs](../tools/handoff.mjs)) is passive: something has to invoke it. The
-runtime layer is [tools/agent-handoff.mjs](../tools/agent-handoff.mjs), which acts on the
+The engine ([handoff.mjs](https://github.com/Alot1z/agent-handoff/blob/main/tools/handoff.mjs)) is passive: something has to invoke it. The
+runtime layer is [tools/agent-handoff.mjs](https://github.com/Alot1z/agent-handoff/blob/main/tools/agent-handoff.mjs), which acts on the
 state of the store — it probes for staleness, checks a handoff against a contract, composes
 sessions, imports other stores and maintains the index.
 
@@ -141,7 +141,7 @@ sessions that have a manifest but no `HANDOFF.md`.
 
 ## Bounded execution — `runtime-engine.mjs`
 
-[tools/runtime-engine.mjs](../tools/runtime-engine.mjs) is the command-execution half of the
+[tools/runtime-engine.mjs](https://github.com/Alot1z/agent-handoff/blob/main/tools/runtime-engine.mjs) is the command-execution half of the
 runtime: every operation is evaluated against `permission-policy.json` **before** it runs, and
 a denied operation is recorded but never executed.
 

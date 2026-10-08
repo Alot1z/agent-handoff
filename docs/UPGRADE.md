@@ -134,4 +134,4 @@ upgrade damaged the folder.
 
 - [INSTALL.md](INSTALL.md)
 - [UNINSTALL.md](UNINSTALL.md)
-- [../README.md](../README.md)
+- [../README.md](https://github.com/Alot1z/agent-handoff/blob/main/README.md)

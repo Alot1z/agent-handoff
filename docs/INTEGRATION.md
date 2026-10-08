@@ -38,7 +38,7 @@ engine; no client is required.
 `harness` and `source` are carried for whatever reads the file later. The engine itself reads
 `seq`, `ts`, `role`, `kind` and `text`, plus `session` and `thread` from the first line.
 
-Turn classification order (`classify()` in [handoff.mjs](../tools/handoff.mjs)):
+Turn classification order (`classify()` in [handoff.mjs](https://github.com/Alot1z/agent-handoff/blob/main/tools/handoff.mjs)):
 
 1. `kind` contains `tool`, or `role` is `tool` → **TOOL**
 2. `kind` contains `reason` or `think` → **THOUGHT**
@@ -87,7 +87,7 @@ nothing.
 
 ## Where handoffs are stored
 
-The root is resolved by one module, [tools/lib/handoff-root.mjs](../tools/lib/handoff-root.mjs),
+The root is resolved by one module, [tools/lib/handoff-root.mjs](https://github.com/Alot1z/agent-handoff/blob/main/tools/lib/handoff-root.mjs),
 in this order:
 
 | # | Source | Detail |
@@ -185,4 +185,4 @@ pipeline can gate on.
   that probes for staleness and runs the build for you.
 - The engine reads whatever the transcript contains, including secrets. Redaction is the
   caller's job. See [SECURITY.md](SECURITY.md).
-- Adapter routes for common session stores: [../refs/ADAPTERS.md](../refs/ADAPTERS.md).
+- Adapter routes for common session stores: [../refs/ADAPTERS.md](https://github.com/Alot1z/agent-handoff/blob/main/refs/ADAPTERS.md).

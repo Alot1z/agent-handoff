@@ -34,8 +34,10 @@ jobs:
         run: |
           node -e "
             const fs = require('fs');
-            const required = ['SKILL.md', 'README.md', 'LICENSE', 'package.json', 'skill.json',
-              'tools/handoff.mjs', 'tools/agent-handoff.mjs', 'docs/index.md', 'docs/INSTALL.md'];
+            const required = ['SKILL.md', 'README.md', 'CHANGELOG.md', 'LICENSE', 'package.json', 'skill.json',
+              'tools/handoff.mjs', 'tools/agent-handoff.mjs',
+              'docs/index.md', 'docs/INSTALL.md', 'docs/CLI.md', 'docs/ARCHITECTURE.md',
+              'docs/TROUBLESHOOTING.md', 'docs/CHANGELOG.md'];
             const missing = required.filter(f => !fs.existsSync(f));
             if (missing.length) { console.error('Missing: ' + missing.join(', ')); process.exit(1); }
             for (const f of ['package.json', 'skill.json', 'handoff.config.schema.json', 'schemas/handoff.schema.json']) {
@@ -43,3 +45,8 @@ jobs:
             }
             console.log('All required files present, JSON valid');
           "
+
+      # The site is built from docs/ alone: a page missing from the navigation, or a link
+      # that leaves docs/, renders fine on GitHub and 404s for a reader of the documentation.
+      - name: Documentation is complete and linkable
+        run: node .github/scripts/check-docs.mjs

@@ -103,7 +103,7 @@ when it is a finite number, and the line index otherwise.
 Any other extension is parsed as text: a line matching `user:`, `human:`, `assistant:`,
 `ai:`, `system:` or `tool:` (optionally prefixed with `#`) starts a turn, and following
 lines are appended to it. The role marker decides the class. Adapters that produce either
-shape are listed in [ADAPTERS.md](../refs/ADAPTERS.md).
+shape are listed in [ADAPTERS.md](https://github.com/Alot1z/agent-handoff/blob/main/refs/ADAPTERS.md).
 
 If no turn parses, the build fails with exit 4.
 

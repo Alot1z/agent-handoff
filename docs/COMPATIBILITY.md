@@ -54,7 +54,7 @@ Malformed JSONL lines and turns with empty text are skipped.
 ## Session sources
 
 Harness stores are read by adapters that normalise a store into the canonical JSONL shape; the
-engine has no harness-specific code. See [../refs/ADAPTERS.md](../refs/ADAPTERS.md).
+engine has no harness-specific code. See [../refs/ADAPTERS.md](https://github.com/Alot1z/agent-handoff/blob/main/refs/ADAPTERS.md).
 
 | Source shape | Route |
 |---|---|

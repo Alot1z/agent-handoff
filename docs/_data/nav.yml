@@ -6,14 +6,18 @@
   path: /UPGRADE.html
 - title: Uninstall
   path: /UNINSTALL.html
+- title: Architecture
+  path: /ARCHITECTURE.html
+- title: Command reference
+  path: /CLI.html
+- title: Handoff format
+  path: /FORMAT.html
 - title: Integration
   path: /INTEGRATION.html
 - title: Runtime layer
   path: /LEVEL4.html
 - title: Dispatch
   path: /LEVEL5.html
-- title: Handoff format
-  path: /FORMAT.html
 - title: Permissions
   path: /PERMISSIONS.html
 - title: Security
@@ -22,5 +26,9 @@
   path: /COMPATIBILITY.html
 - title: Provenance
   path: /PROVENANCE.html
+- title: Troubleshooting
+  path: /TROUBLESHOOTING.html
+- title: Changelog
+  path: /CHANGELOG.html
 - title: Contributing
   path: /CONTRIBUTING.html

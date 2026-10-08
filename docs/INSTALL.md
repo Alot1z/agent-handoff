@@ -174,4 +174,4 @@ By default the engine stores handoff data under its own root, inside the install
 
 - [UPGRADE.md](UPGRADE.md)
 - [UNINSTALL.md](UNINSTALL.md)
-- [../README.md](../README.md)
+- [../README.md](https://github.com/Alot1z/agent-handoff/blob/main/README.md)

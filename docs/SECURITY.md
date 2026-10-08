@@ -18,7 +18,7 @@ what the tool does with data, what it refuses to do, and which guarantees it doe
 | `handoff.config.json` | Walked up from the current directory and validated against `handoff.config.schema.json`. A present-but-invalid file is fatal (`exit 2`). |
 
 Adapters that read a harness session store are external to the engine. They read stores and never
-write to them. See [../refs/ADAPTERS.md](../refs/ADAPTERS.md).
+write to them. See [../refs/ADAPTERS.md](https://github.com/Alot1z/agent-handoff/blob/main/refs/ADAPTERS.md).
 
 ## What the tool writes
 

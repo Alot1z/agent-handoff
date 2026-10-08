@@ -1,6 +1,6 @@
 {
   "name": "agent-handoff",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Write, verify, and hand off complete AI working sessions across any harness (Claude Code, Codex, DeepSeek Harness, plain JSONL or text logs). Cross-harness session capture + verified continuation.",
   "domain": "orchestration",
   "installer": {
@@ -34,7 +34,15 @@
   },
   "l4": {
     "runtime": "node tools/agent-handoff.mjs <verb> [args]",
-    "verbs": ["auto", "verify-gate", "promote", "merge", "self-improve", "index", "dispatch"]
+    "verbs": [
+      "auto",
+      "verify-gate",
+      "promote",
+      "merge",
+      "self-improve",
+      "index",
+      "dispatch"
+    ]
   },
   "handoff": {
     "default_dir": "handoffs/",
@@ -115,7 +123,13 @@
       "docs/CONTRIBUTING.md",
       "install/install.mjs",
       "install/README.md",
-      "install/package.json"
+      "install/package.json",
+      "CHANGELOG.md",
+      "docs/ARCHITECTURE.md",
+      "docs/CLI.md",
+      "docs/TROUBLESHOOTING.md",
+      "docs/CHANGELOG.md",
+      "install/CHANGELOG.md"
     ],
     "local_only": [
       "local/",

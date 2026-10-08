@@ -76,7 +76,7 @@ a folder outside the machine.
 
 ## Repository provenance
 
-- License: MIT, see [../LICENSE](../LICENSE).
+- License: MIT, see [../LICENSE](https://github.com/Alot1z/agent-handoff/blob/main/LICENSE).
 - The engine and runtime use only `node:` built-ins. No third-party source is bundled and
   `package.json` declares no dependencies.
 - Development notes, internal plans and research material are not part of this repository and are

@@ -79,7 +79,7 @@ Checklist:
 
 1. Produce the canonical JSONL from the store, without modifying the store.
 2. Build from it with `HANDOFFS_ROOT` set to a temporary directory and read the result.
-3. Add a row to [ADAPTERS.md](../refs/ADAPTERS.md): store path, adapter route, status. Claim
+3. Add a row to [ADAPTERS.md](https://github.com/Alot1z/agent-handoff/blob/main/refs/ADAPTERS.md): store path, adapter route, status. Claim
    `VERIFIED` only for a source you actually ran.
 4. If the parser changed, add a fixture under `tests/fixtures/` and a test to
    `tools/handoff.test.mjs`.

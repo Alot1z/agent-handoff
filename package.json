@@ -1,6 +1,6 @@
 {
   "name": "agent-handoff",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Write, verify, and hand off complete AI working sessions across any harness (Claude Code, Codex, DeepSeek Harness, plain JSONL or text logs). Cross-harness session capture with sha256 provenance and verified continuation.",
   "type": "module",
   "main": "tools/handoff.mjs",
@@ -12,10 +12,12 @@
     "templates/",
     "refs/",
     "docs/",
+    "CHANGELOG.md",
     "SKILL.md"
   ],
   "scripts": {
     "test": "node tools/handoff.test.mjs",
+    "check:docs": "node .github/scripts/check-docs.mjs",
     "verify": "node tools/handoff.mjs verify",
     "build": "node tools/handoff.mjs build"
   },
@@ -39,7 +41,7 @@
   "bugs": {
     "url": "https://github.com/Alot1z/agent-handoff/issues"
   },
-  "homepage": "https://github.com/Alot1z/agent-handoff#readme",
+  "homepage": "https://alot1z.github.io/agent-handoff/",
   "engines": {
     "node": ">=18.0.0"
   },
