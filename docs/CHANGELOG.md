@@ -104,6 +104,6 @@ documentation site.
   [docs/PROVENANCE.md](https://github.com/Alot1z/agent-handoff/blob/main/docs/PROVENANCE.md),
   not implied.
 
-[Unreleased]: https://github.com/Alot1z/agent-handoff/compare/v2.0.1...HEAD
-[2.0.1]: https://github.com/Alot1z/agent-handoff/releases/tag/v2.0.1
-[2.0.0]: https://github.com/Alot1z/agent-handoff/releases/tag/v2.0.0
+[Unreleased]: https://github.com/Alot1z/agent-handoff/compare/v2.0.1...main
+[2.0.1]: https://github.com/Alot1z/agent-handoff/compare/v2.0.0...v2.0.1
+[2.0.0]: https://github.com/Alot1z/agent-handoff/tree/v2.0.0
