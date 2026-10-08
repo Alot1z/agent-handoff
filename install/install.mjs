@@ -490,13 +490,19 @@ async function install(location, customPath, version, force) {
       missing.map(f => f.to).join(', '));
   }
   
-  // Create package.json if not exists
+  // Create package.json if not exists. An installed copy is a skill, not a package: it carries
+  // no `files` allowlist and no bin, so `npm publish` run inside one would ship whatever happens
+  // to be in the directory — including a handoff store. `private` makes npm refuse there with
+  // EPRIVATE before it authenticates (verified); `npm pack` still packs the directory, so the
+  // flag is a guard against publishing, not a sandbox. The publishable manifest is the
+  // repository root's, which is the package users npx.
   const pkgPath = path.join(installPath, 'package.json');
   if (!fs.existsSync(pkgPath)) {
     fs.writeFileSync(pkgPath, JSON.stringify({
       name: SKILL_NAME,
       version: version === 'latest' ? SKILL_VERSION : version,
-      description: 'Cross-harness session handoff engine',
+      description: 'Cross-harness session handoff engine (installed copy — not a publishable package; the npm package is agents-handoff)',
+      private: true,
       type: 'module'
     }, null, 2));
   }
