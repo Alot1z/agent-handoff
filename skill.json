@@ -1,0 +1,133 @@
+{
+  "name": "agent-handoff",
+  "version": "2.0.0",
+  "description": "Write, verify, and hand off complete AI working sessions across any harness (Claude Code, Codex, DeepSeek Harness, plain JSONL or text logs). Cross-harness session capture + verified continuation.",
+  "domain": "orchestration",
+  "installer": {
+    "type": "npx",
+    "package": "agent-handoff-install",
+    "packageVersion": "1.0.0",
+    "repository": "https://github.com/Alot1z/agent-handoff",
+    "installCommand": "npx agent-handoff-install"
+  },
+  "locations": {
+    "source": "skills/agent-handoff/",
+    "global": {
+      "windows": "<store>/<account-id>/<profile-id>/agent-handoff/  (resolved, see docs/INSTALL.md)",
+      "posix": "~/.config/<client>/account-skills/<account-id>/<profile-id>/agent-handoff/  (resolved)"
+    },
+    "local": "./local/skills/agent-handoff/",
+    "project": "./skills/agent-handoff/"
+  },
+  "dependencies": {
+    "node": ">=18.0.0",
+    "external": []
+  },
+  "commands": {
+    "build": "node tools/handoff.mjs build --source <input> [--session id] [--harness name] [--model name] [--project name] [--objective text]",
+    "build-alias": "node tools/handoff.mjs --handoff --source <input>",
+    "list": "node tools/handoff.mjs list [project-or-prefix]",
+    "show": "node tools/handoff.mjs show <id-prefix>",
+    "verify": "node tools/handoff.mjs verify <id-prefix>",
+    "rename": "node tools/handoff.mjs rename <id-prefix> <new-project>",
+    "retitle": "node tools/handoff.mjs retitle <id-prefix> <new-name>"
+  },
+  "l4": {
+    "runtime": "node tools/agent-handoff.mjs <verb> [args]",
+    "verbs": ["auto", "verify-gate", "promote", "merge", "self-improve", "index", "dispatch"]
+  },
+  "handoff": {
+    "default_dir": "handoffs/",
+    "config_file": "handoff.config.json",
+    "environment": {
+      "HANDOFFS_ROOT": "Override default handoffs location"
+    },
+    "max_brief_tokens": 30000,
+    "schema_version": "2.0.0"
+  },
+  "update": {
+    "check_url": "https://github.com/Alot1z/agent-handoff/releases/latest",
+    "auto_check": true,
+    "installer": "npx agent-handoff-install --update"
+  },
+  "secrets": {
+    "required": false,
+    "warning": "Never commit secrets. Use environment variables or local secrets file.",
+    "envVars": []
+  },
+  "files": {
+    "source": [
+      "SKILL.md",
+      "README.md",
+      "tools/handoff.mjs",
+      "tools/agent-handoff.mjs",
+      "tools/handoff.test.mjs",
+      "tools/capability-registry.mjs",
+      "tools/runtime-engine.mjs",
+      "tools/lib/handoff-root.mjs",
+      "schemas/handoff.schema.json",
+      "templates/*.md",
+      "templates/*.json",
+      "refs/*.md",
+      "install/",
+      "tests/"
+    ],
+    "published": [
+      "SKILL.md",
+      "README.md",
+      "LICENSE",
+      "package.json",
+      "skill.json",
+      "capability-registry.json",
+      "permission-policy.json",
+      "handoff.config.schema.json",
+      "handoff.config.example.json",
+      "tools/handoff.mjs",
+      "tools/agent-handoff.mjs",
+      "tools/handoff.test.mjs",
+      "tools/capability-registry.mjs",
+      "tools/runtime-engine.mjs",
+      "tools/lib/handoff-root.mjs",
+      "schemas/handoff.schema.json",
+      "templates/HANDOFF.template.md",
+      "templates/HANDOFF.llm.schema.json",
+      "tests/acceptance/acceptance.yaml",
+      "tests/fixtures/minimal-transcript.jsonl",
+      "refs/ADAPTERS.md",
+      "refs/handbook.md",
+      "refs/protocol.md",
+      "refs/roles.md",
+      "refs/validator.md",
+      "refs/brief-checklist.md",
+      "refs/bootstrap.md",
+      "docs/index.md",
+      "docs/INSTALL.md",
+      "docs/UPGRADE.md",
+      "docs/UNINSTALL.md",
+      "docs/INTEGRATION.md",
+      "docs/LEVEL4.md",
+      "docs/LEVEL5.md",
+      "docs/FORMAT.md",
+      "docs/PERMISSIONS.md",
+      "docs/SECURITY.md",
+      "docs/COMPATIBILITY.md",
+      "docs/PROVENANCE.md",
+      "docs/CONTRIBUTING.md",
+      "install/install.mjs",
+      "install/README.md",
+      "install/package.json"
+    ],
+    "local_only": [
+      "local/",
+      "projects/",
+      "links/",
+      "tasks/",
+      "private research corpus and internal design notes",
+      "docs/ARCHITECTURE-UPDATES.md",
+      ".env",
+      "*.key",
+      "*.pem",
+      "secrets/"
+    ]
+  }
+}

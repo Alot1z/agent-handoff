@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Test suite
+        run: node tools/handoff.test.mjs
+
+      # The archive is the release artifact the manual install path documents: extract it
+      # and the skill tree is complete, because nothing outside these paths is needed.
+      - name: Build archive
+        run: |
+          mkdir -p dist
+          cp -r tools docs refs templates schemas install tests SKILL.md README.md LICENSE package.json skill.json capability-registry.json permission-policy.json handoff.config.schema.json handoff.config.example.json dist/
+          cd dist
+          zip -r "../agent-handoff-${GITHUB_REF_NAME}.zip" .
+          cd ..
+          ls -l agent-handoff-${GITHUB_REF_NAME}.zip
+
+      - name: Attach archive to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: agent-handoff-${{ github.ref_name }}.zip
+          generate_release_notes: true

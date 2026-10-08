@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AgentSessionHandoff v1",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "session",
+    "generated_at",
+    "counts",
+    "timeline",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string", "description": "2.0.0 or 2.0.0-summary"
+    },
+    "session": {
+      "type": "object",
+      "required": [
+        "id",
+        "harness"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "harness": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "thread": {
+          "type": "string"
+        }
+      }
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "objective": {
+      "type": "string"
+    },
+    "state_now": {
+      "type": "string"
+    },
+    "open_loops": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "evidence_class": {
+      "enum": [
+        "OBSERVED",
+        "VERIFIED",
+        "DERIVED"
+      ]
+    },
+    "counts": {
+      "type": "object",
+      "properties": {
+        "USER": {
+          "type": "integer"
+        },
+        "AGENT": {
+          "type": "integer"
+        },
+        "THOUGHT": {
+          "type": "integer"
+        },
+        "TOOL": {
+          "type": "integer"
+        }
+      }
+    },
+    "timeline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "seq",
+          "class",
+          "text"
+        ],
+        "properties": {
+          "seq": {
+            "type": "integer"
+          },
+          "ts": {
+            "type": [
+              "string",
+              "integer"
+            ]
+          },
+          "class": {
+            "enum": [
+              "USER",
+              "AGENT",
+              "THOUGHT",
+              "TOOL",
+              "OTHER"
+            ],
+            "description": "OTHER = kept for raw fidelity (system/meta turns), omitted from human render tables"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "tool_calls": {
+      "type": "array"
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "sources",
+        "raw_sha256",
+        "total_turns"
+      ],
+      "properties": {
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "raw_sha256": {
+          "type": "string"
+        },
+        "manifest_sha256": {
+          "type": "string"
+        },
+        "watermark": {
+          "type": "integer"
+        },
+        "total_turns": {
+          "type": "integer"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0-permission-policy",
+  "approved_workspaces": [
+    ".",
+    "repo-upstream",
+    ".agent-handoff",
+    ".context"
+  ],
+  "system_read_only_roots": [
+    "C:\\Windows",
+    "C:\\Program Files",
+    "C:\\Program Files (x86)"
+  ],
+  "personal_data_roots": [
+    "C:\\Users"
+  ],
+  "denied_roots": [],
+  "grants": {
+    "DISCOVERY_ONLY": "allow",
+    "READ_ONLY": "allow",
+    "WORKSPACE_WRITE": "allow",
+    "EXTERNAL_EFFECT": "needs_auth",
+    "DESTRUCTIVE": "needs_auth",
+    "IRREVERSIBLE": "needs_auth"
+  },
+  "risk_to_level": {
+    "R0": "READ_ONLY",
+    "R1": "WORKSPACE_WRITE",
+    "R2": "EXTERNAL_EFFECT",
+    "R3": "DESTRUCTIVE",
+    "R4": "IRREVERSIBLE"
+  }
+}

@@ -1,0 +1,122 @@
+---
+title: Compatibility
+---
+
+# Compatibility
+
+## Platforms
+
+| Platform | Level | Notes |
+|---|---|---|
+| Windows 10 / 11 | SUPPORTED | Primary development platform |
+| macOS 12+ | SUPPORTED | Uses only portable Node APIs |
+| Linux | SUPPORTED | Uses only portable Node APIs |
+
+## Runtime
+
+| Requirement | Version | Why |
+|---|---|---|
+| Node.js | 18.0.0 or newer | ES modules and `node:` built-ins |
+| npm | 9.0.0 or newer | Only if you install from the registry |
+
+The engine and the runtime install no packages at run time. `package.json` declares no
+dependencies.
+
+## Architectures
+
+| Architecture | Level | Notes |
+|---|---|---|
+| x64 | SUPPORTED | Primary |
+| arm64 (Apple silicon) | TESTED | macOS |
+| arm64 (Linux) | UNTESTED | Expected to work; no CI runner exercises it |
+
+## Node version matrix
+
+| Version | Level |
+|---|---|
+| 18.x | SUPPORTED (minimum) |
+| 20.x | SUPPORTED |
+| 22.x | SUPPORTED |
+| < 18 | UNSUPPORTED |
+
+## Input formats the engine parses
+
+| Format | How it is detected | Fields read |
+|---|---|---|
+| JSONL | `.jsonl` extension | `seq`, `ts`/`timestamp`, `role`, `kind`, and the text from `text`, `content`, or `parts[].text` |
+| Plain text | Any other extension | A line opening with `user:`, `human:`, `assistant:`, `ai:`, `system:` or `tool:` (or `>` instead of `:`); following lines are appended to that turn |
+
+Turn classification, in this order: `kind` containing `tool`, or `role: "tool"`, becomes `TOOL`;
+`kind` containing `reason` or `think` becomes `THOUGHT`; `role: "user"` (or `kind: "human"`) becomes
+`USER`; `role: "assistant"` (or `kind: "ai"`) becomes `AGENT`; everything else becomes `OTHER`.
+Malformed JSONL lines and turns with empty text are skipped.
+
+## Session sources
+
+Harness stores are read by adapters that normalise a store into the canonical JSONL shape; the
+engine has no harness-specific code. See [../refs/ADAPTERS.md](../refs/ADAPTERS.md).
+
+| Source shape | Route |
+|---|---|
+| JSONL session directory | Adapter projects each session file to canonical JSONL |
+| SQLite session database | Adapter reads the database read-only and projects rows to canonical JSONL |
+| Exported JSONL | Passed directly to `build --source` |
+| Plain text or Markdown log | Role-marker parser built into the engine |
+
+## Filesystem
+
+| Feature | Windows | macOS | Linux |
+|---|---|---|---|
+| Path separators | `\` and `/` | `/` | `/` |
+| Case sensitivity | Insensitive (typical) | Sensitive | Sensitive |
+| Symlinks | Limited | Full | Full |
+| Permissions | ACLs | POSIX | POSIX |
+
+Path handling goes through `node:path`; no path is hard-coded in the engine.
+
+## Environment variables
+
+| Variable | Required | Effect |
+|---|---|---|
+| `HANDOFFS_ROOT` | No | Sets the store root and takes precedence over every other rule |
+
+## Configuration
+
+`handoff.config.json` is optional. It is discovered by walking up from the current directory, a
+maximum of 10 levels, and validated against `handoff.config.schema.json`. The keys the engine acts
+on are `storage.path`, `handoff_dir`, `project_name` and `linking.enabled`. A relative
+`handoff_dir` resolves against the directory that holds the config.
+
+Root resolution order, first match wins: `HANDOFFS_ROOT`, then a config-declared directory, then a
+`handoffs/` directory found by the same upward walk, then the skill directory itself. Run
+`node tools/handoff.mjs config` to see which rule applied.
+
+## Exit codes
+
+| Code | Meaning |
+|---|---|
+| 0 | Success |
+| 1 | Integrity failure (manifest mismatch, corrupted manifest) or an unexpected error |
+| 2 | Usage error, missing source file, or an invalid config |
+| 3 | Ambiguous session-id prefix |
+| 4 | No parsable turns, no handoffs, or no match for the prefix |
+
+## CI
+
+The suite is `node tools/handoff.test.mjs`. It needs no install step, so a CI job is checkout plus
+Node 18/20/22. GitHub Actions workflows are under `.github/workflows/`.
+
+| Platform | Level | Notes |
+|---|---|---|
+| GitHub Actions | SUPPORTED | Workflows included |
+| GitLab CI, Azure DevOps, Jenkins | UNTESTED | Any runner with Node 18+ works |
+
+## Offline use
+
+The engine makes no network requests. The installer downloads a release archive and therefore needs
+network access once; after that the installed skill is offline.
+
+## MCP
+
+The engine is a CLI with text and JSON output, so an MCP server can wrap it. No MCP server ships
+with this repository.

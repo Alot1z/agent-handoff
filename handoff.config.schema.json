@@ -1,0 +1,117 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/Alot1z/agent-skills-soucecode/skills/agent-handoff/handoff.config.schema.json",
+  "title": "Agent Handoff Configuration",
+  "description": "Schema for handoff.config.json — where handoffs are stored, and how a session is captured. Copy handoff.config.example.json to your project root as handoff.config.json to opt in; with no config file the engine keeps its default store. HANDOFFS_ROOT always overrides anything set here.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Optional pointer to this schema, for editor completion."
+    },
+    "version": {
+      "type": "integer",
+      "enum": [1],
+      "default": 1,
+      "description": "Config format version."
+    },
+    "handoff_dir": {
+      "type": "string",
+      "minLength": 1,
+      "default": "handoffs/",
+      "description": "Where handoffs are stored. Relative paths resolve against the directory holding this file; absolute paths are used as-is.",
+      "examples": ["handoffs/", ".context/handoffs/", "/srv/handoffs/"]
+    },
+    "project_name": {
+      "type": ["string", "null"],
+      "default": null,
+      "description": "Project used for grouping handoffs. Auto-detected when null."
+    },
+    "auto_capture": {
+      "type": "boolean",
+      "default": false,
+      "description": "Accepted and validated; reserved — no tool auto-captures sessions yet."
+    },
+    "max_brief_tokens": {
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 100000,
+      "default": 30000,
+      "description": "Accepted and validated; reserved — brief truncation is not implemented."
+    },
+    "exclude_from_handoff": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": [
+        "node_modules/",
+        ".git/",
+        "dist/",
+        "build/",
+        "*.token",
+        "*.key",
+        "*.pem",
+        ".env",
+        "*.log"
+      ],
+      "description": "Accepted and validated; reserved — the engine copies no project trees, so nothing is filtered yet."
+    },
+    "capture": {
+      "type": "object",
+      "additionalProperties": false,
+      "default": {},
+      "properties": {
+        "exclude_patterns": { "type": "array", "items": { "type": "string" } },
+        "include_tool_outputs": { "type": "boolean", "default": true },
+        "truncate_tool_outputs": { "type": "boolean", "default": false },
+        "max_tool_output_length": { "type": "integer", "default": 100000, "minimum": 0 }
+      }
+    },
+    "linking": {
+      "type": "object",
+      "additionalProperties": false,
+      "default": {},
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "HONOURED: when false, cross-project link notes are not written."
+        },
+        "min_overlap_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "default": 0.06,
+          "description": "Accepted and validated; reserved — the engine uses its built-in 0.06 threshold."
+        }
+      }
+    },
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "default": {},
+      "properties": {
+        "sha256_manifest": { "type": "boolean", "default": true },
+        "verify_on_read": { "type": "boolean", "default": false }
+      }
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "default": {},
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["filesystem", "sqlite"],
+          "default": "filesystem",
+          "description": "Only filesystem is implemented; sqlite validates but is not honoured."
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "HONOURED and beats handoff_dir: an explicit store path."
+        }
+      }
+    }
+  }
+}

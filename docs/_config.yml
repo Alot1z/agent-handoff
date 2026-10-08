@@ -1,0 +1,16 @@
+title: agent-handoff
+description: Cross-harness capture and verified continuation for AI working sessions.
+url: https://alot1z.github.io
+baseurl: /agent-handoff
+plugins:
+  - jekyll-relative-links
+relative_links:
+  enabled: true
+  collections: false
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+exclude:
+  - README.md

@@ -1,0 +1,26 @@
+- title: Overview
+  path: /index.html
+- title: Install
+  path: /INSTALL.html
+- title: Upgrade
+  path: /UPGRADE.html
+- title: Uninstall
+  path: /UNINSTALL.html
+- title: Integration
+  path: /INTEGRATION.html
+- title: Runtime layer
+  path: /LEVEL4.html
+- title: Dispatch
+  path: /LEVEL5.html
+- title: Handoff format
+  path: /FORMAT.html
+- title: Permissions
+  path: /PERMISSIONS.html
+- title: Security
+  path: /SECURITY.html
+- title: Compatibility
+  path: /COMPATIBILITY.html
+- title: Provenance
+  path: /PROVENANCE.html
+- title: Contributing
+  path: /CONTRIBUTING.html

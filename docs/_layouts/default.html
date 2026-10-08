@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if page.title and page.title != site.title %}{{ page.title }} · {{ site.title }}{% else %}{{ site.title }}{% endif %}</title>
+<meta name="description" content="{{ page.description | default: site.description }}">
+<link rel="stylesheet" href="{{ '/assets/style.css' | relative_url }}">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="{{ '/' | relative_url }}">{{ site.title }}</a>
+  <span class="tag">{{ site.description }}</span>
+</header>
+<div class="wrap">
+  <nav class="side">
+    <p class="navhead">Documentation</p>
+    <ul>
+      {% for d in site.data.nav %}<li><a href="{{ d.path | relative_url }}">{{ d.title }}</a></li>
+      {% endfor %}
+    </ul>
+  </nav>
+  <main>
+{{ content }}
+  </main>
+</div>
+<footer class="foot">
+  MIT licensed · <a href="{{ site.baseurl }}">repository</a> · documentation source: the docs/ directory of this project
+</footer>
+</body>
+</html>

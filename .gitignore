@@ -1,0 +1,70 @@
+# Dependencies
+node_modules/
+!.package-lock.json
+
+# Build output
+dist/
+.build/
+
+# Environment - NEVER commit real secrets
+.env
+.env.local
+.env.*
+!.env.example
+
+# Local dev only (NOT published)
+local/
+*.local
+
+# Secrets (even templates with placeholders should be careful)
+*.key
+*.pem
+*.p12
+*.jks
+secrets/
+creds/
+credentials/
+
+# Handoffs - user data, not code
+handoffs/
+projects/
+session-sources/
+*.handoff.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary
+tmp/
+temp/
+*.tmp
+*.bak
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Test fixtures with mock data
+test/fixtures/*.json
+!test/fixtures/.gitkeep
+
+# Source maps
+*.map
+
+# Personal config overrides
+config.local.json
+settings.local.json

@@ -1,0 +1,35 @@
+{
+  "$schema": "./handoff.config.schema.json",
+  "version": 1,
+  "handoff_dir": "handoffs/",
+  "project_name": null,
+  "auto_capture": false,
+  "max_brief_tokens": 30000,
+  "exclude_from_handoff": [
+    "node_modules/",
+    ".git/",
+    "dist/",
+    "build/",
+    "*.token",
+    "*.key",
+    "*.pem",
+    ".env",
+    "*.log"
+  ],
+  "capture": {
+    "include_tool_outputs": true,
+    "truncate_tool_outputs": false,
+    "max_tool_output_length": 100000
+  },
+  "linking": {
+    "enabled": true,
+    "min_overlap_score": 0.06
+  },
+  "integrity": {
+    "sha256_manifest": true,
+    "verify_on_read": false
+  },
+  "storage": {
+    "type": "filesystem"
+  }
+}

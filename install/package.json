@@ -1,0 +1,34 @@
+{
+  "name": "agent-handoff-install",
+  "version": "1.0.0",
+  "description": "npx installer for agent-handoff skill - install, update, remove, verify, list",
+  "type": "module",
+  "bin": {
+    "agent-handoff-install": "./install.mjs"
+  },
+  "main": "./install.mjs",
+  "files": [
+    "install.mjs",
+    "package.json",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "echo 'No tests yet' && exit 0"
+  },
+  "keywords": [
+    "agent-handoff",
+    "installer",
+    "npx",
+    "skill"
+  ],
+  "author": "Alot1z",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Alot1z/agent-skills-soucecode"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {}
+}

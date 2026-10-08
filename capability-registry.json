@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0-capability-registry",
+  "capabilities": [
+    {
+      "id": "filesystem.read",
+      "kind": "file-exists",
+      "target": "tests/fixtures/minimal-transcript.jsonl",
+      "required": true,
+      "purpose": "read transcript sources for handoff builds"
+    },
+    {
+      "id": "filesystem.write",
+      "kind": "dir-writable",
+      "target": ".agent-handoff",
+      "required": true,
+      "purpose": "persist runtime state and checkpoints"
+    },
+    {
+      "id": "process.execute",
+      "kind": "command",
+      "command": "<node>",
+      "args": ["-e", "process.exit(0)"],
+      "required": true,
+      "purpose": "execute bounded engine subcommands"
+    }
+  ]
+}
