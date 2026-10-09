@@ -421,6 +421,13 @@ test('runtime: an approved workspace wins over a broad personal-data root it liv
 // out — so this test is about the tree that has one, and an installed copy skips it by name
 // rather than failing the suite that proves the installed copy works.
 const INSTALLER_SRC = path.join(REPO, 'install', 'install.mjs');
+// This file travels to the published repository, and it also runs from the authoring skill
+// tree. `package.json` is NOT one of those two trees' shared files: sync-upstream publishes an
+// allowlist of skill files, and the root package.json is authored in repo-upstream only. A
+// publish-tree assertion therefore cannot be satisfied in the authoring tree, and is named as
+// such rather than failed there. The published tree — and CI, which runs at the repo root —
+// still runs it.
+const IS_PUBLISH_TREE = fs.existsSync(path.join(REPO, 'package.json'));
 test('installer: every manifest source resolves here, and the fallback version matches SKILL.md', (t) => {
   if (!fs.existsSync(INSTALLER_SRC)) {
     return t.skip('no install/ in this tree — an installed copy omits the installer by design');
@@ -447,6 +454,16 @@ test('installer: every manifest source resolves here, and the fallback version m
   assert.ok(version, 'SKILL.md must declare a version');
   assert.equal(fallback[1], version[1],
     'installer fallback version must equal SKILL.md version');
+
+  // skill.json is PUBLISHED metadata: the changelog tells readers that package.json and
+  // skill.json carry the release version, and the installer copies it into every install.
+  // It lagged at 2.0.4 while SKILL.md and package.json said 2.0.5 — a published
+  // contradiction with no runtime consumer to catch it, so the test is the catcher.
+  const skillJson = JSON.parse(fs.readFileSync(path.join(REPO, 'skill.json'), 'utf8'));
+  assert.equal(skillJson.version, version[1],
+    'skill.json version must equal SKILL.md version');
+  assert.equal(skillJson.installer && skillJson.installer.packageVersion, version[1],
+    'skill.json installer.packageVersion must equal SKILL.md version');
 });
 
 // The published identity is one name in one manifest, and every page a user reads has to agree
@@ -456,6 +473,9 @@ test('installer: every manifest source resolves here, and the fallback version m
 test('package: the published name, the packed file list and the docs agree', (t) => {
   if (!fs.existsSync(INSTALLER_SRC)) {
     return t.skip('no install/ in this tree — an installed copy omits the installer by design');
+  }
+  if (!IS_PUBLISH_TREE) {
+    return t.skip('authoring skill tree — the root package.json is authored in repo-upstream');
   }
   const pkg = JSON.parse(fs.readFileSync(path.join(REPO, 'package.json'), 'utf8'));
   assert.equal(pkg.name, 'agents-handoff', 'the published package name');
@@ -482,18 +502,202 @@ test('package: the published name, the packed file list and the docs agree', (t)
       'installer source is not in package.json files, so npm would not ship it: ' + from);
   }
 
-  // The retired name must not survive anywhere a reader would follow it.
-  const retired = 'agent-handoff-install';
+  // The retired PACKAGE name must not survive anywhere a reader would follow it. The install
+  // provenance file is `.agents-handoff-install.json`, which contains the old token as a
+  // substring without being it, so both sides are anchored: not preceded by a dot, not the
+  // `.json` record.
+  const retired = /(?<!\.)agents-handoff-install(?!\.json)/;
   const readers = fs.readdirSync(path.join(REPO, 'docs'))
     .filter((f) => f.endsWith('.md')).map((f) => path.join('docs', f));
   readers.push('README.md', 'skill.json', path.join('install', 'README.md'), path.join('.github', 'workflows', 'release.yml'));
   for (const rel of readers) {
     const abs = path.join(REPO, rel);
     if (!fs.existsSync(abs)) continue;
-    assert.ok(!fs.readFileSync(abs, 'utf8').includes(retired),
-      rel + ' still names the retired package ' + retired);
+    assert.ok(!retired.test(fs.readFileSync(abs, 'utf8')),
+      rel + ' still names the retired package agents-handoff-install');
   }
 });
+
+// ---- installer behaviour -------------------------------------------------------------------
+// The installer is the only thing a new user runs, and its jobs are one sentence each: install
+// into the harness(es) named, update every copy on the machine, verify each copy, and never
+// delete the store. Those are behaviours rather than file lists, so they are exercised by
+// running the real installer against a scratch home.
+//
+// APPDATA/LOCALAPPDATA are redirected with USERPROFILE/HOME because the global resolver
+// DISCOVERS stores under those roots: a test that left them real would read — and, for
+// `--update`, WRITE TO — the developer's own installations.
+const INSTALLER = path.join(REPO, 'install', 'install.mjs');
+const skillVersion = () => /^version:\s*(\S+)/m.exec(fs.readFileSync(path.join(REPO, 'SKILL.md'), 'utf8'))[1];
+// An INSTALLED copy deliberately has no install/ — the manifest leaves the installer out — so
+// these tests skip there by name rather than failing the suite that proves the copy works. This
+// is not a formality: running the suite from an installation is exactly how the missing guard
+// was found, because the failures were `spawnSync` on a path that does not exist.
+// `t.skip()` returns undefined, so a helper that RETURNED it would be falsy and every guarded
+// test would go on to run — which is how this looked like a passing suite with failing tests
+// inside it. The helper returns the verdict, and the caller returns on true.
+function noInstaller(t) {
+  if (fs.existsSync(INSTALLER)) return false;
+  t.skip('no install/ in this tree — an installed copy omits the installer by design');
+  return true;
+}
+
+function scratchHome() {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'ah-home-'));
+  for (const d of ['.claude', '.codex', '.agents']) fs.mkdirSync(path.join(home, d), { recursive: true });
+  return home;
+}
+function runInstaller(args, home, extraEnv = {}) {
+  return spawnSync(process.execPath, [INSTALLER, ...args], {
+    cwd: REPO,
+    encoding: 'utf8',
+    env: Object.assign({}, process.env, {
+      USERPROFILE: home,
+      HOME: home,
+      APPDATA: path.join(home, 'AppData', 'Roaming'),
+      LOCALAPPDATA: path.join(home, 'AppData', 'Local'),
+      AGENT_HANDOFF_GLOBAL_DIR: '',
+    }, extraEnv),
+  });
+}
+const installAt = (home, harness) => path.join(home, harness, 'skills', 'agents-handoff');
+
+for (const t of [
+  ['installer: one run installs into every harness named, each with its own record', (t) => {
+    if (noInstaller(t)) return;
+    const home = scratchHome();
+    try {
+      const r = runInstaller(['--claude', '--codex', '--agents'], home);
+      assert.equal(r.status, 0, 'install exit ' + r.status + '\n' + r.stdout + r.stderr);
+      for (const harness of ['.claude', '.codex', '.agents']) {
+        const target = installAt(home, harness);
+        assert.ok(fs.existsSync(path.join(target, 'SKILL.md')), harness + ': install missing');
+        assert.equal(fs.readdirSync(path.join(target, 'docs')).length > 5, true, harness + ': docs did not install');
+        const prov = JSON.parse(fs.readFileSync(path.join(target, '.agents-handoff-install.json'), 'utf8'));
+        assert.equal(prov.product, 'agents-handoff');
+        assert.equal(prov.harness, harness.slice(1), 'the record names the harness it went into');
+        assert.match(prov.files_sha256, /^[0-9a-f]{64}$/, 'file-set sha256');
+        assert.equal(prov.package.name, 'agents-handoff', 'the record names the npm package');
+        assert.equal(prov.package.version, prov.version, 'and the version it was made from');
+      }
+    } finally { fs.rmSync(home, { recursive: true, force: true }); }
+  }],
+
+  ['installer: --update with no target flag updates every copy, restoring a tampered file, store untouched', (t) => {
+    if (noInstaller(t)) return;
+    const home = scratchHome();
+    try {
+      const a = runInstaller(['--claude', '--agents'], home);
+      assert.equal(a.status, 0, 'setup install: ' + a.stdout + a.stderr);
+      const claude = installAt(home, '.claude');
+      const agents = installAt(home, '.agents');
+      // A store in one copy, and a tampered manifest file in the other.
+      const store = path.join(claude, 'projects', 'demo', 's1');
+      fs.mkdirSync(store, { recursive: true });
+      fs.writeFileSync(path.join(store, 'manifest.json'), '{"keep":true}');
+      fs.writeFileSync(path.join(agents, 'SKILL.md'), 'tampered\n');
+
+      const u = runInstaller(['--update'], home);
+      assert.equal(u.status, 0, 'update exit ' + u.status + '\n' + u.stdout + u.stderr);
+      assert.ok(/2 of 2 installation\(s\) updated|already current/.test(u.stdout), 'summary: ' + u.stdout);
+      assert.equal(fs.readFileSync(path.join(agents, 'SKILL.md'), 'utf8'),
+        fs.readFileSync(path.join(REPO, 'SKILL.md'), 'utf8'), 'the tampered copy was restored');
+      assert.equal(fs.readFileSync(path.join(store, 'manifest.json'), 'utf8'), '{"keep":true}',
+        'an update must not touch the store');
+      for (const target of [claude, agents]) {
+        const prov = JSON.parse(fs.readFileSync(path.join(target, '.agents-handoff-install.json'), 'utf8'));
+        assert.equal(prov.version, skillVersion(), target + ': record version after update');
+      }
+    } finally { fs.rmSync(home, { recursive: true, force: true }); }
+  }],
+
+  ['installer: --verify with no target flag fails on a tampered copy and passes once repaired', (t) => {
+    if (noInstaller(t)) return;
+    const home = scratchHome();
+    try {
+      assert.equal(runInstaller(['--claude', '--agents'], home).status, 0, 'setup install');
+      const bad = installAt(home, '.claude');
+      fs.writeFileSync(path.join(bad, 'SKILL.md'), 'tampered\n');
+      const v = runInstaller(['--verify'], home);
+      assert.notEqual(v.status, 0, 'verify must fail on a tampered copy: ' + v.stdout);
+      assert.ok(/file-set sha256 matches the install record|SKILL\.md/.test(v.stdout + v.stderr), 'reason: ' + v.stdout);
+      assert.equal(runInstaller(['--update'], home).status, 0, 'repair');
+      const ok = runInstaller(['--verify'], home);
+      assert.equal(ok.status, 0, 'verify after repair: ' + ok.stdout + ok.stderr);
+    } finally { fs.rmSync(home, { recursive: true, force: true }); }
+  }],
+
+  ['installer: remove keeps the store and the config, and says so', (t) => {
+    if (noInstaller(t)) return;
+    const home = scratchHome();
+    try {
+      assert.equal(runInstaller(['--agents'], home).status, 0, 'setup install');
+      const target = installAt(home, '.agents');
+      for (const dir of ['projects/demo/s1', 'handoffs', '.agent-handoff']) {
+        fs.mkdirSync(path.join(target, dir), { recursive: true });
+      }
+      fs.writeFileSync(path.join(target, 'projects', 'demo', 's1', 'manifest.json'), '{"keep":true}');
+      fs.writeFileSync(path.join(target, 'handoff.config.json'), '{"store":"mine"}');
+
+      const r = runInstaller(['--remove', '--force', '--path', target], home);
+      assert.equal(r.status, 0, 'remove exit ' + r.status + '\n' + r.stdout + r.stderr);
+      assert.ok(!fs.existsSync(path.join(target, 'tools', 'handoff.mjs')), 'the engine is gone');
+      assert.ok(!fs.existsSync(path.join(target, 'SKILL.md')), 'SKILL.md is gone');
+      assert.equal(fs.readFileSync(path.join(target, 'projects', 'demo', 's1', 'manifest.json'), 'utf8'),
+        '{"keep":true}', 'the store survives');
+      assert.equal(fs.readFileSync(path.join(target, 'handoff.config.json'), 'utf8'), '{"store":"mine"}',
+        'the config survives');
+      assert.ok(r.stdout.includes('Kept — not the installer\'s to delete'), 'it reports what it kept: ' + r.stdout);
+    } finally { fs.rmSync(home, { recursive: true, force: true }); }
+  }],
+
+  ['installer: verify-package refuses a version npm does not serve, and never claims otherwise', (t) => {
+    if (noInstaller(t)) return;
+    const home = scratchHome();
+    try {
+      assert.equal(runInstaller(['--agents'], home).status, 0, 'setup install');
+      const target = installAt(home, '.agents');
+      // A version that cannot exist: the registry answers 404 (or the network is absent). Both
+      // are the same verdict here — the check cannot be satisfied, so it must fail rather than
+      // pass by default. What is asserted is the honesty of the answer, not the network.
+      const md = fs.readFileSync(path.join(target, 'SKILL.md'), 'utf8')
+        .replace(/^version:\s*\S+/m, 'version: 0.0.0-not-a-release');
+      fs.writeFileSync(path.join(target, 'SKILL.md'), md);
+      const r = runInstaller(['--verify-package', '--path', target], home);
+      assert.notEqual(r.status, 0, 'an unpublished version must not verify: ' + r.stdout);
+      assert.ok(/not on the npm registry|unreachable/.test(r.stdout + r.stderr), 'reason: ' + r.stdout + r.stderr);
+    } finally { fs.rmSync(home, { recursive: true, force: true }); }
+  }],
+
+  // `--path X` names ONE installation. It used to fall through to machine-wide discovery, so
+  // `verify --path ./my-copy` reported on (and failed because of) every OTHER copy on the
+  // machine — an explicit request silently widened into a different question.
+  ['installer: verify --path checks exactly that copy, not every copy on the machine', (t) => {
+    if (noInstaller(t)) return;
+    const home = scratchHome();
+    try {
+      // A decoy the search SHOULD find and fail, so the assertion below cannot pass vacuously.
+      assert.equal(runInstaller(['--agents'], home).status, 0, 'setup: decoy install');
+      const decoy = installAt(home, '.agents');
+      fs.writeFileSync(path.join(decoy, 'SKILL.md'), 'tampered\n');
+
+      // A clean copy somewhere the search does not look.
+      const copy = path.join(home, 'elsewhere', 'agents-handoff');
+      assert.equal(runInstaller(['--path', copy], home).status, 0, 'setup: clean copy');
+
+      const scoped = runInstaller(['verify', '--path', copy], home);
+      assert.equal(scoped.status, 0, 'verify --path must ignore an unrelated stale copy: ' + scoped.stdout + scoped.stderr);
+      assert.ok(!scoped.stdout.includes(decoy), 'the out-of-scope copy is not even reported: ' + scoped.stdout);
+
+      // Discovery still works — this is what makes the assertion above meaningful.
+      const bare = runInstaller(['verify'], home);
+      assert.notEqual(bare.status, 0, 'a bare verify must still find (and fail) the tampered copy: ' + bare.stdout);
+      assert.ok(bare.stdout.includes(decoy), 'the bare verify names the copy it found: ' + bare.stdout);
+    } finally { fs.rmSync(home, { recursive: true, force: true }); }
+  }],
+]) {
+  test(t[0], t[1]);
+}
 
 test('rebuild of identical source is idempotent (up-to-date, revision stable)', () => {
   const root = scratch();
@@ -507,5 +711,188 @@ test('rebuild of identical source is idempotent (up-to-date, revision stable)', 
     assert.ok(b2.stdout.includes('up-to-date'), 'idempotent marker: ' + b2.stdout);
     const rev2 = JSON.parse(fs.readFileSync(manP, 'utf8')).revisions;
     assert.equal(rev2, rev1, 'revision must not bump on identical rebuild');
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+// ===========================================================================
+// REGRESSION BLOCK — the four verified defects from the 2026-10-09 audit.
+// Each of these FAILS against 2.0.4 as published; each passes here.
+// ===========================================================================
+
+// Every manifest under a scratch store root. The session directory name is derived from
+// the source basename, so tests that build from a differently-named file must not hard-code
+// 'minimal-transcript' the way sessionDir() does.
+function findManifests(root) {
+  const out = [];
+  const walk = (d) => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
+      if (e.isDirectory()) walk(p); else if (e.name === 'manifest.json') out.push(p);
+    }
+  };
+  const proj = path.join(root, 'projects');
+  if (fs.existsSync(proj)) walk(proj);
+  return out;
+}
+function timelineOf(manifestPath) {
+  return fs.readFileSync(path.join(path.dirname(manifestPath), 'timeline.jsonl'), 'utf8')
+    .split(/\r?\n/).filter(Boolean).map((l) => JSON.parse(l));
+}
+// The L4 runtime is a SEPARATE executable that acts on a STORE, not on a transcript.
+function runL4(args, root) {
+  return spawnSync(process.execPath, [path.join(REPO, 'tools', 'agents-handoff.mjs'), ...args], {
+    cwd: REPO,
+    env: Object.assign({}, process.env, { HANDOFFS_ROOT: root, AGENT_HANDOFF_STATE_DIR: STATE_DIR }),
+    encoding: 'utf8',
+  });
+}
+
+// Fix A — the parser read only TOP-LEVEL text/content/parts, so a real Claude Code or Codex
+// export (which NESTS the text) parsed to zero usable turns, while `--harness claude-code`
+// merely labelled the result. These are the shapes the harnesses actually write.
+test('A: a real Claude Code transcript (nested message.content[]) parses into turns', () => {
+  const root = scratch();
+  try {
+    const src = path.join(root, 'claude-code-session.jsonl');
+    fs.writeFileSync(src, [
+      JSON.stringify({ type: 'user', message: { role: 'user', content: 'Create src/sum.js exporting add(a,b).' }, timestamp: '2026-10-09T10:00:00.000Z' }),
+      JSON.stringify({ type: 'assistant', message: { role: 'assistant', content: [{ type: 'thinking', thinking: 'plan the module and its test' }] }, timestamp: '2026-10-09T10:00:01.000Z' }),
+      JSON.stringify({ type: 'assistant', message: { role: 'assistant', content: [{ type: 'text', text: 'Added src/sum.js and exported add().' }] }, timestamp: '2026-10-09T10:00:02.000Z' }),
+      JSON.stringify({ type: 'assistant', message: { role: 'assistant', content: [{ type: 'tool_use', id: 't1', name: 'Write', input: { file_path: 'src/sum.js' } }] }, timestamp: '2026-10-09T10:00:03.000Z' }),
+    ].join('\n') + '\n');
+    const r = run(['build', '--source', src, '--project', 'cc-proj', '--harness', 'claude-code'], root);
+    assert.equal(r.status, 0, 'the real Claude Code shape must build: ' + r.stderr);
+    const mans = findManifests(root);
+    assert.equal(mans.length, 1, 'exactly one session built, got ' + mans.length);
+    const tl = timelineOf(mans[0]);
+    assert.equal(tl.length, 4, 'all four Claude Code records become turns, got ' + tl.length);
+    assert.deepEqual(tl.map((t) => t.class), ['USER', 'THOUGHT', 'AGENT', 'AGENT']);
+    assert.ok(tl[0].text.includes('Create src/sum.js'), 'the nested user text is kept');
+    assert.ok(tl[2].text.includes('Added src/sum.js'), 'the nested text block is kept: ' + tl[2].text);
+    assert.ok(tl[3].text.includes('tool_use Write'), 'the nested tool_use call is kept: ' + tl[3].text);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+// The Codex CLI rollout wraps every event in `payload`. Reading only the top level loses the
+// type AND the role, so a Codex session recorded nothing at all.
+test('A: a Codex CLI rollout (payload-nested) parses, and its calls classify as TOOL', () => {
+  const root = scratch();
+  try {
+    const src = path.join(root, 'rollout-codex.jsonl');
+    fs.writeFileSync(src, [
+      JSON.stringify({ timestamp: '2026-10-09T11:00:00.000Z', type: 'response_item', payload: { type: 'message', role: 'user', content: [{ type: 'input_text', text: 'Run the full test suite.' }] } }),
+      JSON.stringify({ timestamp: '2026-10-09T11:00:01.000Z', type: 'response_item', payload: { type: 'function_call', name: 'shell', arguments: '{"command":["node","tools/handoff.test.mjs"]}' } }),
+      JSON.stringify({ timestamp: '2026-10-09T11:00:02.000Z', type: 'response_item', payload: { type: 'function_call_output', output: 'tests 34 pass 34' } }),
+      JSON.stringify({ timestamp: '2026-10-09T11:00:03.000Z', type: 'response_item', payload: { type: 'message', role: 'assistant', content: [{ type: 'output_text', text: 'All 34 tests pass.' }] } }),
+    ].join('\n') + '\n');
+    const r = run(['build', '--source', src, '--project', 'codex-proj', '--harness', 'codex'], root);
+    assert.equal(r.status, 0, 'the Codex rollout shape must build: ' + r.stderr);
+    const tl = timelineOf(findManifests(root)[0]);
+    assert.equal(tl.length, 4, 'all four Codex records become turns, got ' + tl.length);
+    assert.deepEqual(tl.map((t) => t.class), ['USER', 'TOOL', 'TOOL', 'AGENT']);
+    assert.ok(tl[1].text.includes('function_call shell'), 'the call and its arguments are kept: ' + tl[1].text);
+    assert.ok(tl[2].text.includes('34 pass 34'), 'the call output is kept: ' + tl[2].text);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+// Fix B — a malformed JSONL line used to be dropped in SILENCE (`return null`), which turns
+// corruption into a quietly incomplete handoff. Doctrine #1 is fail-closed on ambiguity.
+test('B: unparseable JSONL lines fail closed (exit 5) and name the line; --allow-bad-lines is explicit', () => {
+  const root = scratch();
+  try {
+    const src = path.join(root, 'mixed.jsonl');
+    fs.writeFileSync(src, [
+      JSON.stringify({ role: 'user', text: 'Do the thing.' }),
+      '{"role": "assistant", "text": ',
+      JSON.stringify({ role: 'assistant', text: 'Done.' }),
+    ].join('\n') + '\n');
+    const strict = run(['build', '--source', src, '--project', 'mixed'], root);
+    assert.equal(strict.status, 5, 'a mixed file must fail closed, got ' + strict.status + ' ' + strict.stderr);
+    assert.ok(/unparseable JSONL line\(s\) at 2 \(invalid JSON\)/.test(strict.stderr), 'the bad LINE is named: ' + strict.stderr);
+    const lax = run(['build', '--source', src, '--project', 'mixed', '--allow-bad-lines'], root);
+    assert.equal(lax.status, 0, '--allow-bad-lines proceeds: ' + lax.stderr);
+    assert.ok(/WARNING — skipped 1 unparseable line/.test(lax.stderr), 'the skip is announced, never silent: ' + lax.stderr);
+    assert.equal(timelineOf(findManifests(root)[0]).length, 2, 'the two good turns are the handoff');
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+// Fix D — HANDOFF.md is the gate's INPUT (the gate reads RESULT:/EVIDENCE: out of it), but a
+// rebuild regenerated the file and erased the hand-authored contract, destroying the very
+// input the next gate run needs.
+test('D: a hand-authored evidence contract survives a rebuild and is hashed into the manifest', () => {
+  const root = scratch();
+  try {
+    const src = path.join(root, 'growing.jsonl');
+    fs.copyFileSync(FIXTURE, src);
+    assert.equal(run(['build', '--source', src, '--project', 'ev-proj'], root).status, 0, 'setup build');
+    const manP = findManifests(root)[0];
+    const mdP = path.join(path.dirname(manP), 'HANDOFF.md');
+    assert.ok(/\(none yet\)/.test(fs.readFileSync(mdP, 'utf8')), 'a fresh handoff still has no contract');
+    const contract = [
+      'RESULT: PARTIAL',
+      'WHAT_CHANGED: src/sum.js added',
+      'VALIDATION: node --test tools/handoff.test.mjs',
+      'EVIDENCE: dist/sum.js sha256=abc123',
+      'BLOCKERS: none',
+      'RISKS: none',
+      'FOLLOW_UP: wire sum() into the CLI', ''].join('\n');
+    fs.appendFileSync(mdP, '\n' + contract);
+    // Grow the source so the rebuild is a REAL rewrite, not the up-to-date short circuit.
+    fs.appendFileSync(src, JSON.stringify({ seq: 9, ts: '2026-10-09T12:00:00Z', role: 'assistant', text: 'Wired sum() into the CLI.' }) + '\n');
+    const b2 = run(['build', '--source', src, '--project', 'ev-proj'], root);
+    assert.equal(b2.status, 0, 'rebuild: ' + b2.stderr);
+    assert.ok(!b2.stdout.includes('up-to-date'), 'the rebuild must actually rewrite HANDOFF.md: ' + b2.stdout);
+    const md2 = fs.readFileSync(mdP, 'utf8');
+    for (const field of ['RESULT:', 'WHAT_CHANGED:', 'VALIDATION:', 'EVIDENCE:', 'BLOCKERS:', 'RISKS:', 'FOLLOW_UP:']) {
+      assert.ok(md2.includes(field), field + ' was destroyed by the rebuild');
+    }
+    assert.ok(md2.includes('dist/sum.js sha256=abc123'), 'the evidence VALUE survived verbatim');
+    const man = JSON.parse(fs.readFileSync(manP, 'utf8'));
+    assert.ok(/^[0-9a-f]{64}$/.test(man.evidence_contract_sha256 || ''), 'the contract is hashed into the manifest: ' + man.evidence_contract_sha256);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+// Fix C — `promote` called the gate, printed its verdict and threw it away (`void gateRun`),
+// so a REJECTED handoff was promoted anyway: the gate was decorative.
+test('C: promote refuses a handoff whose evidence gate FAILED; --force is the auditable override', () => {
+  const root = scratch();
+  try {
+    assert.equal(run(['build', '--source', FIXTURE, '--project', 'gate-proj'], root).status, 0, 'setup build');
+    const manP = findManifests(root)[0];
+    const id = JSON.parse(fs.readFileSync(manP, 'utf8')).session;
+    const pre = id.slice(0, 16);
+
+    // (1) no contract at all → the gate FAILS and the EXIT CODE carries that verdict.
+    const g1 = runL4(['verify-gate', pre], root);
+    assert.equal(g1.status, 6, 'a REJECTED gate must not exit 0: ' + g1.stdout + g1.stderr);
+    assert.equal(JSON.parse(g1.stdout).verdict, 'REJECTED', 'verdict: ' + g1.stdout);
+
+    // (2) promote must REFUSE. This is the defect: it used to print REJECTED and promote.
+    const p1 = runL4(['promote', pre], root);
+    assert.equal(p1.status, 6, 'promote must refuse a failed gate, got ' + p1.status + ' ' + p1.stdout + p1.stderr);
+    assert.ok(/promote refused: evidence gate REJECTED/.test(p1.stderr), 'the refusal names the gate: ' + p1.stderr);
+    assert.equal(JSON.parse(fs.readFileSync(manP, 'utf8')).promoted_at, undefined, 'a refused promote must not mark the manifest');
+
+    // (3) --force is deliberate and RECORDED as forced, never as verified.
+    const p2 = runL4(['promote', pre, '--force'], root);
+    assert.equal(p2.status, 0, 'the override proceeds: ' + p2.stdout + p2.stderr);
+    assert.equal(JSON.parse(p2.stdout).gate, 'FORCED', 'an override is recorded as FORCED: ' + p2.stdout);
+
+    // (4) the positive control: with a real contract the gate PASSES and promote carries VERIFIED.
+    const mdP = path.join(path.dirname(manP), 'HANDOFF.md');
+    fs.appendFileSync(mdP, '\n' + [
+      'RESULT: PARTIAL',
+      'WHAT_CHANGED: src/sum.js added',
+      'VALIDATION: node --test tools/handoff.test.mjs',
+      'EVIDENCE: dist/sum.js sha256=abc123',
+      'BLOCKERS: none',
+      'RISKS: none',
+      'FOLLOW_UP: wire sum() into the CLI', ''].join('\n'));
+    const g2 = runL4(['verify-gate', pre], root);
+    assert.equal(g2.status, 0, 'a complete contract must pass the gate: ' + g2.stdout + g2.stderr);
+    assert.equal(JSON.parse(g2.stdout).verdict, 'VERIFIED');
+    const p3 = runL4(['promote', pre], root);
+    assert.equal(p3.status, 0, 'a verified handoff promotes without --force: ' + p3.stdout + p3.stderr);
+    assert.equal(JSON.parse(p3.stdout).gate, 'VERIFIED', 'a clean gate records VERIFIED: ' + p3.stdout);
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });

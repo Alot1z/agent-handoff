@@ -27,6 +27,9 @@ const argOf = (name, fallback) => {
 };
 const STORE = path.resolve(ROOT, argOf('--store', 'examples/sessions'));
 const OUT = path.resolve(ROOT, argOf('--out', 'docs/SESSIONS.md'));
+// The same rows as machine-readable JSON, so the page is not the only reader: a script, a badge
+// or another site can load the feed without parsing markdown, and `--check` keeps both in step.
+const FEED = path.resolve(ROOT, argOf('--feed', 'docs/sessions.json'));
 const CHECK = process.argv.includes('--check');
 
 const sha = (s) => crypto.createHash('sha256').update(s).digest('hex');
@@ -192,6 +195,37 @@ lines.push('');
 lines.push('`--check` is wired into CI, so a store that changes without the page changing fails the build');
 lines.push('instead of publishing a table that no longer matches what the engine can read.');
 lines.push('');
+lines.push('The store is also published as JSON, for anything that would rather read data than');
+lines.push('markdown: [`sessions.json`](sessions.json) (`1.0-session-feed`) — the same rows, with an');
+lines.push('`integrity` verdict per session. The filter below runs in the browser against the table you');
+lines.push('are looking at; nothing is fetched.');
+lines.push('');
+lines.push('<p class="session-filter">');
+lines.push('  <label for="session-filter">Filter sessions</label>');
+lines.push('  <input id="session-filter" type="search" placeholder="project, session, harness, integrity…" size="34" />');
+lines.push('  <span id="session-filter-count" class="session-filter-count"></span>');
+lines.push('</p>');
+lines.push('');
+lines.push('<script>');
+lines.push('(function () {');
+lines.push('  var input = document.getElementById(\'session-filter\');');
+lines.push('  if (!input) return;');
+lines.push('  var rows = Array.prototype.slice.call(document.querySelectorAll(\'table tbody tr\'));');
+lines.push('  var count = document.getElementById(\'session-filter-count\');');
+lines.push('  function apply() {');
+lines.push('    var q = input.value.trim().toLowerCase(), shown = 0;');
+lines.push('    rows.forEach(function (tr) {');
+lines.push('      var hit = !q || tr.textContent.toLowerCase().indexOf(q) > -1;');
+lines.push('      tr.style.display = hit ? \'\' : \'none\';');
+lines.push('      if (hit) shown += 1;');
+lines.push('    });');
+lines.push('    if (count) count.textContent = shown + \' of \' + rows.length + \' shown\';');
+lines.push('  }');
+lines.push('  input.addEventListener(\'input\', apply);');
+lines.push('  apply();');
+lines.push('})();');
+lines.push('</script>');
+lines.push('');
 lines.push('## Next');
 lines.push('');
 lines.push('- The file-by-file contract for a session folder is in [FORMAT.md](FORMAT.md).');
@@ -200,31 +234,66 @@ lines.push('- What the hashes prove, and what they cannot, is in [PROVENANCE.md]
 lines.push('');
 const page = lines.join('\n');
 
+// The feed is derived from the same rows, and deliberately carries no generation timestamp:
+// a value that changed on every run would make `--check` useless. `as_of` is the newest
+// session timestamp in the store, so it only moves when the store does.
+const feed = {
+  schema_version: '1.0-session-feed',
+  generated_by: '.github/scripts/build-sessions-index.mjs',
+  store: path.relative(ROOT, STORE).split(path.sep).join('/'),
+  index_source: indexSource,
+  as_of: rows.reduce((newest, r) => (r.updated > newest ? r.updated : newest), ''),
+  count: rows.length,
+  projects: projects.length,
+  failed: failed.length,
+  sessions: rows.map((r) => ({
+    id: r.id,
+    project: r.project,
+    harness: r.harness,
+    model: r.model,
+    turns: r.turns,
+    revisions: r.revisions,
+    updated: r.updated,
+    manifest_sha256: r.manifest_sha256,
+    integrity: r.status === 'PASS' ? 'pass' : 'fail',
+    ...(r.why ? { why: r.why } : {}),
+  })),
+};
+const feedText = JSON.stringify(feed, null, 2) + '\n';
+
 const existing = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8') : null;
+const existingFeed = fs.existsSync(FEED) ? fs.readFileSync(FEED, 'utf8') : null;
 
 if (CHECK) {
   const stale = existing !== page;
-  if (stale || failed.length) {
+  const feedStale = existingFeed !== feedText;
+  if (stale || feedStale || failed.length) {
     if (stale) console.error('build-sessions-index: ' + path.relative(ROOT, OUT) + ' is stale (store: ' + indexSource + ')');
+    if (feedStale) console.error('build-sessions-index: ' + path.relative(ROOT, FEED) + ' is stale (store: ' + indexSource + ')');
     for (const f of failed) console.error('  FAIL ' + f.project + '/' + f.id + ': ' + f.why);
     console.error('  run: node .github/scripts/build-sessions-index.mjs');
     process.exit(1);
   }
   console.log('build-sessions-index: OK — ' + rows.length + ' session(s) across ' + projects.length +
-    ' project(s), all verified; ' + path.relative(ROOT, OUT) + ' matches the store');
+    ' project(s), all verified; ' + path.relative(ROOT, OUT) + ' and ' + path.relative(ROOT, FEED) +
+    ' match the store');
   process.exit(0);
 }
 
 if (failed.length) {
-  console.error('build-sessions-index: ' + failed.length + ' session(s) failed verification — the page was not written');
+  console.error('build-sessions-index: ' + failed.length + ' session(s) failed verification — nothing was written');
   for (const f of failed) console.error('  FAIL ' + f.project + '/' + f.id + ': ' + f.why);
   process.exit(1);
 }
 
-if (existing === page) {
-  console.log('build-sessions-index: ' + path.relative(ROOT, OUT) + ' already current (' + rows.length + ' session(s))');
+const pageCurrent = existing === page;
+const feedCurrent = existingFeed === feedText;
+if (pageCurrent && feedCurrent) {
+  console.log('build-sessions-index: ' + path.relative(ROOT, OUT) + ' and ' + path.relative(ROOT, FEED) +
+    ' already current (' + rows.length + ' session(s))');
   process.exit(0);
 }
-fs.writeFileSync(OUT, page);
-console.log('build-sessions-index: wrote ' + path.relative(ROOT, OUT) + ' — ' + rows.length +
-  ' session(s) across ' + projects.length + ' project(s) from ' + indexSource + '; all verified');
+if (!pageCurrent) fs.writeFileSync(OUT, page);
+if (!feedCurrent) fs.writeFileSync(FEED, feedText);
+console.log('build-sessions-index: wrote ' + path.relative(ROOT, OUT) + ' and ' + path.relative(ROOT, FEED) +
+  ' — ' + rows.length + ' session(s) across ' + projects.length + ' project(s) from ' + indexSource + '; all verified');

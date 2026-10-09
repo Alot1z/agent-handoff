@@ -15,10 +15,10 @@ npx agents-handoff --remove
 Removal asks for confirmation first:
 
 ```
-This will remove agent-handoff from:
+This will remove agents-handoff from:
   <install-path>
 
-Your handoffs (projects/, handoffs/, links/) will NOT be deleted.
+Your handoffs and anything else you put in this directory will NOT be deleted.
 Configuration (handoff.config.json) will NOT be deleted.
 
 Continue? (y/N)
@@ -36,36 +36,56 @@ npx agents-handoff --remove --force
 | Option | Effect |
 |---|---|
 | `--remove` | Remove the installation (interactive confirmation). |
-| `--force`, `-f` | Skip the confirmation, and delete the kept directories when they are empty. |
+| `--force`, `-f` | Skip the confirmation. |
 | `--location <global\|local\|project>` | Which installation to remove. Global is the default and is resolved the same way as for install. |
 | `--path <dir>` | Remove the installation at exactly this directory. |
+| `--claude`, `--codex`, `--agents` | Remove that harness's installation. Repeatable, and combinable. |
+| `--harness <a,b>` | Named harness(es), comma separated. Repeatable. |
+| `--all` | Every harness whose configuration directory exists on this machine. |
+| `--skills-dir <dir>` | Remove the installation under exactly this directory. Repeatable. |
+| `--project` | With a harness flag: the per-repository installation. |
+
+Removing several harnesses at once is the same one run as installing them, and each target is
+reported on its own:
+
+```bash
+npx agents-handoff --remove --claude --force
+npx agents-handoff --remove --all --force
+```
 
 Flag form and bare verb are equivalent: `--remove` and `remove`, `--force` and `-f`.
 
 ## What is removed
 
-Everything in the installation directory, except the entries listed in the next section:
+**Only what the installation owns — the manifest.** The rule is a removal set, not a keep
+list, so a directory nobody thought to name is kept rather than deleted:
 
 - the engine and runtime: `tools/`, `tools/lib/`
-- metadata: `SKILL.md`, `skill.json`, `package.json`, the manifest JSON files
+- metadata: `SKILL.md`, `README.md`, `LICENSE`, `skill.json`, the manifest JSON files
+- the install record: `.agents-handoff-install.json`
 - `schemas/`, `refs/`, `templates/`, `docs/`, `tests/`
-- `INDEX.json` and any other generated file in that directory
+- the `package.json` stub the installer wrote, and only that stub — a `package.json` you have
+  edited is kept
 
 Each removed entry is printed as `Removed file: <name>` or `Removed directory: <name>/`.
 
 ## What is kept
 
-| Kept | Why |
-|---|---|
-| `handoffs/`, `projects/`, `links/` | Your session data. |
-| `handoff.config.json` | Your configuration. |
-| `.env.example` | Your environment template. |
-| Anything you added elsewhere in the directory | The installer only removes entries it walks past; it never deletes a directory it keeps. |
+Everything else in the directory — the installer prints the list at the end:
 
-With `--force`, the three data directories are still kept unless they are empty, in which case
-they are removed and reported as `Removed empty directory: <name>/`. After that, if the
-installation directory itself is empty it is removed too. If handoffs remain in it, the
-directory stays.
+```
+Kept — not the installer's to delete:
+  .agent-handoff/
+  handoff-session.md
+  handoff.config.json
+  handoffs/
+  projects/
+```
+
+That includes a store under any name (`.agent-handoff/`, `projects/`, `handoffs/`, or one of
+your own), `links/`, notes, your `handoff.config.json`, and anything else you added. Nothing is
+deleted for being empty, and nothing outside those paths is touched; if data remains, the
+installation directory remains with it.
 
 ## Manual uninstall
 
@@ -74,12 +94,17 @@ Remove the skill files and leave the data behind:
 ```bash
 cd "<install-path>"
 
-# Keep these: handoffs/ projects/ links/ handoff.config.json .env.example
-rm -rf tools docs refs templates schemas src tests
-rm -f SKILL.md skill.json package.json INDEX.json \
+# Exactly the manifest this same release installs. Your store, notes and
+# handoff.config.json are not listed, so they stay.
+rm -rf tools docs refs templates schemas tests
+rm -f SKILL.md README.md LICENSE skill.json \
       capability-registry.json permission-policy.json \
-      handoff.config.schema.json handoff.config.example.json
+      handoff.config.schema.json handoff.config.example.json \
+      .agents-handoff-install.json
 ```
+
+A `package.json` the installer wrote (`"private": true`, `"name": "agents-handoff"`) can go
+too; one you edited is yours to keep. `--remove` makes that distinction itself.
 
 If you never store handoffs inside the installation — for example when `HANDOFFS_ROOT` points
 somewhere else — and you do not need anything else in it, the whole directory can go:
@@ -113,7 +138,8 @@ and can be read by a later installation, or by any tool that reads a handoff fol
 | Nothing was removed | The confirmation was skipped. Pass `--force`. |
 | `EPERM` or `EBUSY` on Windows | A process is holding the files. Close it and retry, or check file attributes. |
 | Permission denied | The installation is outside your user directory. Remove it with the privileges that created it, or use `--force` from a shell that can write there. |
-| Handoff data disappeared | It was an empty kept directory removed by `--force`, or `HANDOFFS_ROOT` points elsewhere. Check the root printed by `handoff.mjs config`. |
+| The directory is still there after `--remove` | It is not empty: the entries printed under `Kept — not the installer's to delete:` are still inside. Remove them yourself if you no longer want them. |
+| Handoff data seems to be missing | `HANDOFFS_ROOT` points elsewhere. Check the root printed by `handoff.mjs config`; `--remove` never deletes a store inside the install directory. |
 
 ## See also
 

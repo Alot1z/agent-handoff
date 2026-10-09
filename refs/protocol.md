@@ -1,7 +1,7 @@
 # Handoff Protocol — live dispatch state, frontmatter, status, evidence (port of choughton/llm-handoff)
 
 > Adapted from `choughton/llm-handoff` (Apache-2.0). This fuses its file-based
-> dispatch protocol into agent-handoff's fileset. Where our engine already
+> dispatch protocol into agents-handoff's fileset. Where our engine already
 > existed (RESULT/WHAT_CHANGED..., sha256 manifests), this ADDS the live
 > routing layer: a single `HANDOFF.md` file that doubles as **the mutex and the
 > debugger** — every transition is visible as text, and a run only advances when

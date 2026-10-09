@@ -11,7 +11,7 @@ elsewhere means either pasting the chat back in, or starting from memory. Both l
 that matters: the exact turns, the tool calls, and the ability to prove which source bytes
 produced the brief you are reading.
 
-agent-handoff turns the session into files instead. A directory of plain text and JSON, a
+agents-handoff turns the session into files instead. A directory of plain text and JSON, a
 hash chain over it, and a fixed folder layout. Anything that can read a file can continue
 from one, with no shared memory between the two sessions.
 
@@ -22,10 +22,10 @@ Five layers, each with one job, and each usable without the ones above it.
 | Layer | File | Job |
 |---|---|---|
 | Capture engine | `tools/handoff.mjs` | Turns one transcript into one handoff folder. Passive: something has to invoke it. |
-| Runtime layer | `tools/agent-handoff.mjs` | Acts on the state of the store: staleness, gates, composition, imports, index. |
+| Runtime layer | `tools/agents-handoff.mjs` | Acts on the state of the store: staleness, gates, composition, imports, index. |
 | Bounded execution | `tools/runtime-engine.mjs` | Decides whether an operation may run, before running it. |
 | Capability probes | `tools/capability-registry.mjs` | Reports what a declared capability actually does on this machine. |
-| Distribution | `install/install.mjs` | Puts the skill where a client will look for it. |
+| Distribution | `install/install.mjs` | Puts the skill where a client will look for it — one harness, several at once, or an exact directory — and records what it installed. |
 
 The capture engine has no opinion about installation, and the runtime layer has no opinion
 about transcripts — it shells out to the engine for builds and verification. That split is
@@ -90,6 +90,23 @@ What the chain detects: a manifest edited by hand, a truncated or extended timel
 payload that no longer parses. What it does not do is prove that the source was authentic —
 read [PROVENANCE.md](PROVENANCE.md) for the precise boundary.
 
+## Install provenance
+
+A handoff folder proves what it was built from. An installation answers a different question:
+what is on this machine, and where did it come from. The installer writes
+`.agents-handoff-install.json` into every copy it makes, and `verify` re-hashes the same file
+set to compare the copy with that record.
+
+| Value | Definition |
+|---|---|
+| `files_sha256` | SHA-256 over the sorted `path\0sha256(file)` lines of every manifest file. |
+| `files` | Per-file sha256 values, so a mismatch names the file that changed. |
+| `source` | `tree` for a copy made from a checkout or archive beside the installer, or `archive` with the tag and the archive's own sha256 when the copy was fetched. |
+
+The install record is a record, not a signature: it proves what was installed and detects
+drift, and it cannot prove the tree it came from was trustworthy. That distinction is stated
+in full in [PROVENANCE.md](PROVENANCE.md).
+
 ## Concurrency and write safety
 
 Every mutating runtime command takes a lock before touching the store. Locks live in
@@ -123,10 +140,11 @@ that produced it. A probe kind with no implementation returns `unknown` rather t
 `healthy`. `check` exits non-zero when a required capability is `unknown`, because an
 unanswered question is not a pass.
 
-The same rule applies to the evidence gate. `verify-gate` returns `REJECTED` in its JSON
-when a check fails, and exits 0 either way, so the verdict has to be read rather than
-inferred from a status code. `promote` prints the gate result without enforcing it, which is
-stated in the command reference rather than left for a caller to discover.
+The same rule applies to the evidence gate. `verify-gate` returns `REJECTED` in its JSON when a
+check fails **and exits 6**, so a caller that reads only the status code still fails closed
+instead of reading a rejection as success. `promote` runs the same gate and refuses with
+`exit 6` unless `--force` is passed; a forced promotion is recorded as `promoted_gate: "FORCED"`
+so it stays distinguishable from a verified one.
 
 ## Boundaries
 
@@ -145,18 +163,24 @@ stated in the command reference rather than left for a caller to discover.
 
 ```
 tools/handoff.mjs          capture engine
-tools/agent-handoff.mjs    runtime layer
+tools/agents-handoff.mjs    runtime layer
+tools/agent-handoff.mjs     forwarder from the runtime layer's pre-rename path
 tools/runtime-engine.mjs   bounded execution
 tools/capability-registry.mjs  capability probes
 tools/lib/handoff-root.mjs store-root resolution (single owner)
 tools/handoff.test.mjs     the hermetic test suite
 docs/                      this documentation and the Pages site
+docs/SESSIONS.md           the session index, rendered from a real store
+.github/scripts/           generators and checks: the session index, the doc link check
 refs/                      reference material: adapters, protocol, roles, brief checklist
 templates/                 handoff templates and the LLM payload schema
 schemas/                   the portable handoff payload schema
 install/                   the installer behind the agents-handoff npx package
 tests/                     acceptance fixture and a minimal transcript
 ```
+
+Inside an installed copy — not in this repository — the installer adds
+`.agents-handoff-install.json`, the record of what landed there and what it was made from.
 
 The documentation site at <https://alot1z.github.io/agent-handoff/> is built by GitHub Pages
 directly from `docs/`. `docs/_data/nav.yml` is the navigation, `docs/_config.yml` is the

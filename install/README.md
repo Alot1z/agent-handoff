@@ -1,6 +1,6 @@
 # agents-handoff
 
-npx installer for the agent-handoff skill.
+npx installer for the agents-handoff skill.
 
 ## Quick start
 
@@ -56,13 +56,13 @@ npx agents-handoff where
 ## Locations
 
 - **global**: resolved, not hard-coded — an account-skill root that already holds
-  `agent-handoff`, else `~/.agents/skills`, else any account-skill store found on this
-  machine (`<store>/<account-id>/<profile-id>/agent-handoff/`), else `~/.agents/skills`,
+  `agents-handoff`, else `~/.agents/skills`, else any account-skill store found on this
+  machine (`<store>/<account-id>/<profile-id>/agents-handoff/`), else `~/.agents/skills`,
   created on install. See it resolved:
   `npx agents-handoff where`. Override with `AGENT_HANDOFF_GLOBAL_DIR`, or target an
   exact path with `--path`.
-- **local**: `./local/skills/agent-handoff/`
-- **project**: `./skills/agent-handoff/` (only detected if in a git repo)
+- **local**: `./local/skills/agents-handoff/`
+- **project**: `./skills/agents-handoff/` (only detected if in a git repo)
 
 ## Requirements
 
@@ -71,6 +71,6 @@ npx agents-handoff where
 
 ## Development
 
-This installer is part of the agent-handoff skill source code.
+This installer is part of the agents-handoff skill source code.
 
-See the [agent-handoff docs](https://github.com/Alot1z/agent-handoff/tree/main/docs) for more.
+See the [agents-handoff docs](https://github.com/Alot1z/agent-handoff/tree/main/docs) for more.

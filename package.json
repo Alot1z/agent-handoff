@@ -1,12 +1,12 @@
 {
   "name": "agents-handoff",
-  "version": "2.0.2",
+  "version": "2.0.5",
   "description": "Write, verify, and hand off complete AI working sessions across any harness (Claude Code, Codex, DeepSeek Harness, plain JSONL or text logs). Cross-harness session capture with sha256 provenance and verified continuation.",
   "type": "module",
   "main": "tools/handoff.mjs",
   "bin": {
     "agents-handoff": "./install/install.mjs",
-    "agent-handoff": "./tools/handoff.mjs"
+    "handoff": "./tools/handoff.mjs"
   },
   "files": [
     "install/",

@@ -1,6 +1,6 @@
 # Examples
 
-Example usage of agent-handoff.
+Example usage of agents-handoff.
 
 ## Demo
 

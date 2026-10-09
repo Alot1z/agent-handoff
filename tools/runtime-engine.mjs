@@ -21,7 +21,7 @@
 // 137 simulated abrupt kill (job --fail-at); otherwise the child's captured exit
 // code (bounded execution).
 // Checkpoints (Task 6): after EACH bounded step of a job a durable checkpoint is
-// written to .agent-handoff/checkpoints/<session>.json with a sha256 integrity
+// written to .agents-handoff/checkpoints/<session>.json with a sha256 integrity
 // seal. Resume reconstructs state from disk ONLY — zero shared memory. A missing
 // checkpoint fails honestly (exit 4, never guessed); a tampered checkpoint fails
 // the integrity seal (exit 5). Abrupt termination is simulated by process.exit(137)
@@ -37,7 +37,7 @@ const DEFAULT_POLICY = path.join(REPO, 'permission-policy.json');
 // nothing. Env: AGENT_HANDOFF_STATE_DIR=<dir>
 const STATE_DIR = process.env.AGENT_HANDOFF_STATE_DIR
   ? path.resolve(process.env.AGENT_HANDOFF_STATE_DIR)
-  : path.join(REPO, '.agent-handoff');
+  : path.join(REPO, '.agents-handoff');
 const EXEC_DIR = path.join(STATE_DIR, 'executions');
 const CKPT_DIR = path.join(STATE_DIR, 'checkpoints');
 const JOBS_DIR = path.join(STATE_DIR, 'jobs');

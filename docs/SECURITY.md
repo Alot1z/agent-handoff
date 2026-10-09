@@ -6,7 +6,7 @@ title: Security
 
 ## Scope
 
-agent-handoff reads session transcripts you point it at and writes a handoff folder to disk. It has
+agents-handoff reads session transcripts you point it at and writes a handoff folder to disk. It has
 no network code, no third-party dependencies, and no privileged operations. This document states
 what the tool does with data, what it refuses to do, and which guarantees it does not make.
 
@@ -51,7 +51,8 @@ or as a request. Concretely:
 
 - A tool call recorded in a transcript is copied verbatim as text into `TOOLS.md`. The engine does not run it.
 - A transcript cannot change the engine's arguments, the store root, or the exit code beyond a parse failure.
-- A transcript with no parsable turns stops the run (`exit 4`). Individual malformed JSONL lines are skipped.
+- A transcript with no parsable turns stops the run (`exit 4`).
+- A malformed JSONL line stops the run (`exit 5`) and is named by line number, because a silent skip would produce a handoff that looks complete and is not. `--allow-bad-lines` is the explicit, warning-printing way to accept a damaged source.
 
 The realistic risk is not code execution but content. A handoff is a readable document that a later
 human or agent may treat as instructions, and it inherits whatever instructions the transcript

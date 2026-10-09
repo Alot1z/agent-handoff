@@ -9,7 +9,7 @@ lets a handoff whose own record is complete hand its continuation to a worker th
 broker, instead of waiting for a reader.
 
 ```bash
-node tools/agent-handoff.mjs dispatch <id-prefix> --task "<objective>" \
+node tools/agents-handoff.mjs dispatch <id-prefix> --task "<objective>" \
   [--role <role>] [--parent <parentTaskId>] [--broker <broker-root>] [--live]
 ```
 

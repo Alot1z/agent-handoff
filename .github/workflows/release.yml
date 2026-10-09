@@ -31,14 +31,14 @@ jobs:
           mkdir -p dist
           cp -r tools docs refs templates schemas install tests SKILL.md README.md LICENSE package.json skill.json capability-registry.json permission-policy.json handoff.config.schema.json handoff.config.example.json dist/
           cd dist
-          zip -r "../agent-handoff-${GITHUB_REF_NAME}.zip" .
+          zip -r "../agents-handoff-${GITHUB_REF_NAME}.zip" .
           cd ..
-          ls -l agent-handoff-${GITHUB_REF_NAME}.zip
+          ls -l agents-handoff-${GITHUB_REF_NAME}.zip
 
       - name: Attach archive to the release
         uses: softprops/action-gh-release@v2
         with:
-          files: agent-handoff-${{ github.ref_name }}.zip
+          files: agents-handoff-${{ github.ref_name }}.zip
           generate_release_notes: true
 
       # The repository root IS the published package (`agents-handoff` in package.json), and its
@@ -64,3 +64,38 @@ jobs:
           fi
           npm publish --access public
           echo "Published agents-handoff@${VERSION}"
+
+      # A local build proves the tree is good; it cannot prove what npm SERVES. This step takes
+      # the tarball the registry just accepted, unpacks it, and runs the suite that ships inside
+      # it — which is the same thing a user gets from `npx agents-handoff`. A published package
+      # missing a file, a broken bin path or a suite that only passes in the working copy fails
+      # here, on the tag, instead of on a stranger's machine.
+      #
+      # No token is needed to read a public package, so this runs whether or not NPM_TOKEN is
+      # configured; a version that is not on npm (publish skipped) is reported and skipped.
+      - name: Verify the published tarball
+        run: |
+          set -euo pipefail
+          VERSION=$(node -p "require('./package.json').version")
+          for attempt in $(seq 1 12); do
+            npm view "agents-handoff@${VERSION}" dist.tarball >/dev/null 2>&1 && break
+            echo "waiting for npm to serve agents-handoff@${VERSION} (attempt ${attempt})..."
+            sleep 10
+          done
+          if ! npm view "agents-handoff@${VERSION}" dist.tarball >/dev/null 2>&1; then
+            echo "agents-handoff@${VERSION} is not on npm (no NPM_TOKEN, or the publish was skipped) — nothing to verify."
+            exit 0
+          fi
+
+          workdir=$(mktemp -d)
+          cd "$workdir"
+          npm pack "agents-handoff@${VERSION}" >/dev/null
+          tar -xzf agents-handoff-*.tgz
+          cd package
+          echo "--- files in the published tarball ---"
+          ls
+          echo "--- the published tarball runs its own suite ---"
+          node tools/handoff.test.mjs
+          echo "--- and the installer ships with it ---"
+          node install/install.mjs --help >/dev/null
+          echo "agents-handoff@${VERSION} verified from the registry"

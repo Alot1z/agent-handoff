@@ -1,8 +1,8 @@
 ---
-title: Integrating agent-handoff
+title: Integrating agents-handoff
 ---
 
-# Integrating agent-handoff
+# Integrating agents-handoff
 
 The engine is a command-line program with a file contract. There is no daemon, no network
 call and no database. Integration means three things: getting a transcript into the canonical
@@ -58,7 +58,9 @@ The marker is `user|human|assistant|ai|system|tool`, optionally prefixed by `#` 
 by `:` or `>`. Lines after a marker are appended to that turn until the next marker. A
 `system:` line becomes OTHER, so it stays in the record without appearing as dialogue.
 
-If no usable turn is parsed, the build fails with exit 4 rather than writing an empty handoff.
+If no usable turn is parsed, the build fails with exit 4 rather than writing an empty handoff. A
+JSONL line that does not parse fails the build with exit 5 instead of being skipped silently;
+`--allow-bad-lines` accepts a damaged source on purpose and warns about how many lines it skipped.
 
 ## Build a handoff
 
@@ -162,6 +164,7 @@ and does not detect.
 | 2 | Usage or configuration error: missing `--source`, missing argument, invalid config. |
 | 3 | Ambiguous id prefix — more than one session matched. |
 | 4 | No usable turns, no handoffs, or no session matching the prefix. |
+| 5 | Unparseable JSONL line(s), unless `--allow-bad-lines` was passed. |
 
 ## CI recipe
 
@@ -170,9 +173,9 @@ and does not detect.
   env:
     HANDOFFS_ROOT: ${{ github.workspace }}/.handoffs
   run: |
-    node skills/agent-handoff/tools/handoff.mjs build \
+    node skills/agents-handoff/tools/handoff.mjs build \
       --source exported-transcript.jsonl --project ci --harness generic
-    node skills/agent-handoff/tools/handoff.mjs verify "$(ls .handoffs/projects/ci | head -1)"
+    node skills/agents-handoff/tools/handoff.mjs verify "$(ls .handoffs/projects/ci | head -1)"
 ```
 
 `HANDOFFS_ROOT` keeps the run off any configured store, and `verify` returns the exit code a

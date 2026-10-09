@@ -12,7 +12,7 @@
 // healthy (unhealthy OR unknown — unknown is never accepted as healthy);
 // 2 registry file missing/corrupt/invalid; 4 unknown capability id or usage error.
 // State: writes <AGENT_HANDOFF_STATE_DIR>/capability-state.json after every check
-// (default .agent-handoff/capability-state.json when the env override is absent).
+// (default .agents-handoff/capability-state.json when the env override is absent).
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -24,7 +24,7 @@ const DEFAULT_REGISTRY = path.join(REPO, 'capability-registry.json');
 // nothing. Env: AGENT_HANDOFF_STATE_DIR=<dir>
 const STATE_DIR = process.env.AGENT_HANDOFF_STATE_DIR
   ? path.resolve(process.env.AGENT_HANDOFF_STATE_DIR)
-  : path.join(REPO, '.agent-handoff');
+  : path.join(REPO, '.agents-handoff');
 const STATE_PATH = path.join(STATE_DIR, 'capability-state.json');
 
 const argOf = (n, f) => { const i = process.argv.indexOf(n); return i >= 0 && i + 1 < process.argv.length ? process.argv[i + 1] : (f ? f() : null); };

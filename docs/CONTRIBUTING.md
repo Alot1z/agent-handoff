@@ -91,7 +91,7 @@ Checklist:
 - Keep the exit codes. They are contracts (see the table above and
   [INTEGRATION.md](INTEGRATION.md)).
 - Never commit session data or credentials: no `handoffs/`, `projects/`, `links/`,
-  `.agent-handoff/`, no `*.key`, `*.pem`, `*.token`, and no transcript copied from a real
+  `.agents-handoff/`, no `*.key`, `*.pem`, `*.token`, and no transcript copied from a real
   session. Test input belongs in `tests/fixtures/`.
 - A behaviour change comes with a test in `tools/handoff.test.mjs` and an update to the
   document that owns the contract: [FORMAT.md](FORMAT.md) for the files and fields,
@@ -108,7 +108,7 @@ Checklist:
 | `docs/` | These documents. |
 | `install/` | `install.mjs`, the `npx` installer, and its own README. |
 | `tools/handoff.mjs` | The handoff engine: build, list, show, verify, rename, retitle, config. |
-| `tools/agent-handoff.mjs` | The runtime verbs layered over the engine. |
+| `tools/agents-handoff.mjs` | The runtime verbs layered over the engine. |
 | `tools/runtime-engine.mjs` | Permission policy, bounded execution, checkpoints and resume. |
 | `tools/capability-registry.mjs` | Probes declared capabilities and reports honest verdicts. |
 | `tools/handoff.test.mjs` | The test suite. |

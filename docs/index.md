@@ -1,20 +1,22 @@
 ---
-title: agent-handoff
+title: agents-handoff
 ---
 
-# agent-handoff documentation
+# agents-handoff documentation
 
-agent-handoff turns an AI working session — chat turns, tool calls, reasoning, however the
+agents-handoff turns an AI working session — chat turns, tool calls, reasoning, however the
 client stored it — into a folder of plain files that a different agent, a different harness,
 or a colleague can read and continue from without the original chat. It builds from a
 transcript or an adapter export, keeps a hash chain so a handoff can be re-verified, and
 merges later turns into the same session instead of duplicating it.
 
+![agents-handoff demo](https://raw.githubusercontent.com/Alot1z/agent-handoff/main/assets/handoff-demo.gif)
+
 ## Quick start
 
 ```bash
-# 1. Install the skill
-npx agents-handoff
+# 1. Install the skill into every harness found on this machine
+npx agents-handoff --all
 
 # 2. Build a handoff from a transcript
 node tools/handoff.mjs build --source transcript.jsonl --project my-project
@@ -28,11 +30,20 @@ node tools/handoff.mjs verify <id-prefix>
 `build` also accepts `--session`, `--harness`, `--model` and `--objective`. Run
 `node tools/handoff.mjs config` to see which store root the engine resolved and why.
 
+`--all` installs into every harness present on the machine; `--claude`, `--codex`, `--agents`
+and `--skills-dir <dir>` pick one or several instead, and `npx agents-handoff --update` brings
+every copy on the machine up to date in one run. `npx agents-handoff --verify-package` then
+proves the copy on disk is identical to the tarball npm is serving for its version, while
+`npx agents-handoff --doctor` reports what is installed where and whether each copy still
+matches the record written when it was installed. The installer's full surface is in
+[CLI.md](CLI.md) and [INSTALL.md](INSTALL.md).
+
 ## Where to start
 
 | If you want to… | Read |
 |---|---|
 | install it | [INSTALL.md](INSTALL.md) |
+| prove an install matches the published package | [INSTALL.md](INSTALL.md) and [CLI.md](CLI.md) |
 | understand how the pieces fit | [ARCHITECTURE.md](ARCHITECTURE.md) |
 | look up a command, flag or exit code | [CLI.md](CLI.md) |
 | know exactly what a handoff folder holds | [FORMAT.md](FORMAT.md) |
@@ -51,7 +62,7 @@ node tools/handoff.mjs verify <id-prefix>
 | [ARCHITECTURE.md](ARCHITECTURE.md) | The layers, the data flow, the store root, the write-safety discipline, the boundaries |
 | [CLI.md](CLI.md) | Every executable, verb, flag, exit code, environment variable and file written |
 | [FORMAT.md](FORMAT.md) | Handoff folder layout, every file in it, the manifest and the schemas |
-| [SESSIONS.md](SESSIONS.md) | Session index: a sample store, its captured sessions, and how to verify and re-render them |
+| [SESSIONS.md](SESSIONS.md) | Session index: a sample store, its captured sessions, and how to verify and re-render them. The same rows are published as [sessions.json](sessions.json) (schema `1.0-session-feed`) for anything that would rather read data than markdown, and the page filters in the browser |
 | [INTEGRATION.md](INTEGRATION.md) | Embedding the engine, configuration and environment, CI and pipeline use |
 | [LEVEL4.md](LEVEL4.md) | Dynamic runtime layer: runtime verbs, gates and promotion |
 | [LEVEL5.md](LEVEL5.md) | Collaborative dispatch: routing a handoff to another agent |

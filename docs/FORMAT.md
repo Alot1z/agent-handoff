@@ -62,6 +62,34 @@ project recorded in its manifest.
 Renders (`HANDOFF.md`, the two JSON payloads) are rewritten on every build; `timeline.jsonl`
 is not.
 
+## Installed-copy artifacts (not part of a session)
+
+Two files belong to an INSTALLATION rather than to a session, and neither is written by the
+capture engine. They sit in the directory the installer copied into, beside `SKILL.md`, and
+nothing above in this document describes them.
+
+| File | Written by | Contents |
+|---|---|---|
+| `package.json` | `install`, `update` | Only when the directory has none. A minimal manifest marked `private`, so the copy can report its own version and cannot be published to npm by accident. |
+| `.agents-handoff-install.json` | `install`, `update` | The install record: what version landed, from which source, and a sha256 over the installed file set. |
+
+The install record:
+
+| Field | Meaning |
+|---|---|
+| `schema_version` | `1.0-install-provenance`. |
+| `product`, `version` | The skill this is a copy of, and the version that landed, read back out of the installed `SKILL.md`. |
+| `installer_version`, `installed_at` | The installer that wrote the record, and when. |
+| `harness`, `target` | The harness the copy went to (`claude`, `codex`, `agents`) when one was named, else `null`, and the absolute target path. |
+| `source` | `{kind: 'tree', path}` for a copy made from a tree beside the installer, or `{kind: 'archive', ref, label, archive_url, archive_sha256}` when the copy was fetched instead. |
+| `file_count`, `files_sha256` | How many manifest files the copy holds, and one sha256 over all of them. |
+| `files` | Per-path sha256 values, so a mismatch names the file that changed. |
+
+`verify` re-hashes the manifest files, recomputes `files_sha256` and fails when one changed or
+went missing. An installation made before this record existed has none: `verify` says so and
+checks everything else, and treats the absence as neither a pass nor a failure.
+[PROVENANCE.md](PROVENANCE.md) states what the record proves and what it cannot.
+
 ## manifest.json
 
 | Field | Meaning |
@@ -77,6 +105,9 @@ is not.
 | `turn_count` | Number of turns in `timeline.jsonl` after the build. |
 | `counts` | Turn counts by class: `USER`, `AGENT`, `THOUGHT`, `TOOL`. |
 | `manifest_sha256` | Self-hash: SHA-256 of the manifest JSON with this field removed. |
+| `evidence_contract_sha256` | SHA-256 of the hand-authored evidence block carried into `HANDOFF.md`. Present only when such a block exists. This is what makes "the contract survived the rebuild" checkable rather than asserted. |
+| `promoted_at`, `promoted_by` | Set by the L4 `promote` command after its evidence gate passes. |
+| `promoted_gate` | `VERIFIED` when the gate passed, `FORCED` when `promote --force` overrode a rejection. |
 | `prev_project` | Set when `rename` moves the session to another project. |
 | `titled_from` | Previous directory names, set by `retitle`. |
 
@@ -96,16 +127,22 @@ Turn text is taken from `text`, then `content`, then `parts[].text`.
 
 ## Accepted input
 
-A source file ending in `.jsonl` is read line by line. Each line is parsed
-independently; a line that does not parse, or whose text is blank, is skipped. `seq` is used
-when it is a finite number, and the line index otherwise.
+A source file ending in `.jsonl` is read line by line. Each line is parsed independently. Text is
+taken from the top level (`text`, `content`, `output`), from a nested message
+(`message.content[]`), from an item array (`parts[]`, `item.content[]`), or from a Codex rollout
+`payload` — so a real Claude Code or Codex export parses without preprocessing. `seq` is used when
+it is a finite number, and the line index otherwise.
+
+A line that parses but whose text is blank is counted as skipped: that is normal harness metadata,
+not damage. A line that does **not** parse is treated as corruption and stops the build with
+`exit 5`, naming the line, unless `--allow-bad-lines` is passed.
 
 Any other extension is parsed as text: a line matching `user:`, `human:`, `assistant:`,
 `ai:`, `system:` or `tool:` (optionally prefixed with `#`) starts a turn, and following
 lines are appended to it. The role marker decides the class. Adapters that produce either
 shape are listed in [ADAPTERS.md](https://github.com/Alot1z/agent-handoff/blob/main/refs/ADAPTERS.md).
 
-If no turn parses, the build fails with exit 4.
+If no turn parses, the build fails with exit 4 — whether or not unparseable lines were found.
 
 ## Session id and directory name
 
@@ -127,6 +164,12 @@ render. `rename <id-prefix> <new-project>` moves the session under another proje
 Each build appends only the turns with `seq > watermark`, then sets `watermark` to the
 highest `seq` seen and increments `revisions`. A rebuild with no new turns and an unchanged
 `raw_sha256` prints `handoff: up-to-date` and writes nothing.
+
+A rebuild regenerates `HANDOFF.md`, so the **evidence contract is carried across verbatim**:
+the `RESULT`/`WHAT_CHANGED`/`VALIDATION`/`EVIDENCE`/`BLOCKERS`/`RISKS`/`FOLLOW_UP` block a human or
+agent authored is read from the existing `HANDOFF.md`, re-emitted under
+`## Evidence contract (hand-authored — preserved across rebuilds)`, and hashed into
+`evidence_contract_sha256`. Without that, growing a session would destroy the gate's own input.
 
 ## Provenance and verification
 

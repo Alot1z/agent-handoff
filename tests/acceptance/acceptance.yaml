@@ -1,5 +1,5 @@
 # Acceptance Manifest
-# Version 1.1 — agent-handoff acceptance tests
+# Version 1.1 — agents-handoff acceptance tests
 #
 # Every `command` below is a shell command: run it from the repository root and compare the
 # exit code, stdout and stderr with what the entry claims. There is no bundled runner — the
@@ -23,7 +23,7 @@ environment:
 placeholders:
   CLI: "node tools/handoff.mjs"
   BUILD_COMMAND: "node tools/handoff.mjs"
-  RUNTIME: "node tools/agent-handoff.mjs"
+  RUNTIME: "node tools/agents-handoff.mjs"
   TEST_COMMAND: "node tools/handoff.test.mjs"
   PROJECT_ROOT: "."
 

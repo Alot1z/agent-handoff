@@ -22,13 +22,13 @@ jobs:
       - name: Test suite
         run: node tools/handoff.test.mjs
       # The runtime layer acts on a STORE, so the smoke test gives it one. It used to run
-      # `agent-handoff.mjs list`, which is not a verb of that tool at all (the verbs are auto,
+      # `agents-handoff.mjs list`, which is not a verb of that tool at all (the verbs are auto,
       # verify-gate, promote, merge, federated-merge, dispatch, self-improve, index), so this
       # step exited 2 and every CI run on main was red.
       - name: Runtime layer responds
         run: |
           HANDOFFS_ROOT="${RUNNER_TEMP}/runtime-store" node tools/handoff.mjs build --source tests/fixtures/minimal-transcript.jsonl --project ci
-          HANDOFFS_ROOT="${RUNNER_TEMP}/runtime-store" node tools/agent-handoff.mjs index
+          HANDOFFS_ROOT="${RUNNER_TEMP}/runtime-store" node tools/agents-handoff.mjs index
       - name: Installer help
         run: node install/install.mjs --help
 
@@ -41,7 +41,7 @@ jobs:
           node -e "
             const fs = require('fs');
             const required = ['SKILL.md', 'README.md', 'CHANGELOG.md', 'LICENSE', 'package.json', 'skill.json',
-              'tools/handoff.mjs', 'tools/agent-handoff.mjs',
+              'tools/handoff.mjs', 'tools/agents-handoff.mjs',
               'docs/index.md', 'docs/INSTALL.md', 'docs/CLI.md', 'docs/ARCHITECTURE.md',
               'docs/TROUBLESHOOTING.md', 'docs/CHANGELOG.md', 'docs/SESSIONS.md'];
             const missing = required.filter(f => !fs.existsSync(f));

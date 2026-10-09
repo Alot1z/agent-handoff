@@ -1,6 +1,6 @@
 # Example: Building a handoff
 
-This example shows how to use agent-handoff with the demo transcript.
+This example shows how to use agents-handoff with the demo transcript.
 
 ## Step 1: Build a handoff
 

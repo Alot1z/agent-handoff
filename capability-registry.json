@@ -11,7 +11,7 @@
     {
       "id": "filesystem.write",
       "kind": "dir-writable",
-      "target": ".agent-handoff",
+      "target": ".agents-handoff",
       "required": true,
       "purpose": "persist runtime state and checkpoints"
     },

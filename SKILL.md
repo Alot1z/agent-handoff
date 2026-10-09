@@ -1,12 +1,12 @@
 ---
-name: agent-handoff
+name: agents-handoff
 description: >-
   Write, verify, and hand off complete AI working sessions across any harness
   (Claude Code, Codex, DeepSeek Harness, plain JSONL or text logs). Captures a
   session as a portable, sha256-proven handoff folder a fresh agent can continue
   from with zero shared memory, with versioned contracts, an evidence gate, and
   backup/verify/rollback on every write. Zero runtime dependencies, no network.
-version: 2.0.2
+version: 2.0.5
 domain: orchestration
 tokens: 900
 allowed-tools: Bash(node:*), Read, Edit, Write
@@ -25,8 +25,8 @@ conversation anywhere, with provenance for every artifact.
 | **L1 Metadata** | Always (frontmatter above) | ~100 | name + description |
 | **L2 Instructions** | This file, when triggered | <5k | core workflow + commands below |
 | **L3 Resources** | As needed | none until read | `docs/`, `templates/`, `refs/`, `tools/handoff.mjs` |
-| **L4 Dynamic** | When you need runtime/self-adapting | none until run | `tools/agent-handoff.mjs`: auto, verify-gate, promote, merge, self-improve |
-| **L5 Collaborative** | Verified handoff dispatches a worker | none until run | `tools/agent-handoff.mjs` dispatch + `docs/LEVEL5.md` |
+| **L4 Dynamic** | When you need runtime/self-adapting | none until run | `tools/agents-handoff.mjs`: auto, verify-gate, promote, merge, self-improve |
+| **L5 Collaborative** | Verified handoff dispatches a worker | none until run | `tools/agents-handoff.mjs` dispatch + `docs/LEVEL5.md` |
 
 ## What this skill is (capabilities + contracts)
 
@@ -100,13 +100,13 @@ FOLLOW_UP:
 
 ### D. Level 4 runtime + L5 dispatch
 ```bash
-HANDOFFS_ROOT=<store> node tools/agent-handoff.mjs auto --source <file> --session <id> --harness <h> --project <p>
-HANDOFFS_ROOT=<store> node tools/agent-handoff.mjs verify-gate <id-prefix>
-HANDOFFS_ROOT=<store> node tools/agent-handoff.mjs promote <id-prefix>
-HANDOFFS_ROOT=<store> node tools/agent-handoff.mjs merge <a> <b>
-HANDOFFS_ROOT=<store> node tools/agent-handoff.mjs self-improve
-HANDOFFS_ROOT=<store> node tools/agent-handoff.mjs index
-HANDOFFS_ROOT=<store> node tools/agent-handoff.mjs dispatch <id-prefix> --task "<objective>" [--broker <orchestrator-root> --live]
+HANDOFFS_ROOT=<store> node tools/agents-handoff.mjs auto --source <file> --session <id> --harness <h> --project <p>
+HANDOFFS_ROOT=<store> node tools/agents-handoff.mjs verify-gate <id-prefix>
+HANDOFFS_ROOT=<store> node tools/agents-handoff.mjs promote <id-prefix>
+HANDOFFS_ROOT=<store> node tools/agents-handoff.mjs merge <a> <b>
+HANDOFFS_ROOT=<store> node tools/agents-handoff.mjs self-improve
+HANDOFFS_ROOT=<store> node tools/agents-handoff.mjs index
+HANDOFFS_ROOT=<store> node tools/agents-handoff.mjs dispatch <id-prefix> --task "<objective>" [--broker <orchestrator-root> --live]
 ```
 Dispatch re-runs the evidence gate first; carries manifest sha256; dry-run by default
 (autonomy ladder: workflow-execute requires explicit --live).
@@ -137,11 +137,11 @@ Dispatch re-runs the evidence gate first; carries manifest sha256; dry-run by de
 | Fresh-session bootstrap | `refs/bootstrap.md` |
 | Brief discipline | `refs/brief-checklist.md` |
 | Engine source | `tools/handoff.mjs` |
-| L4 runtime | `tools/agent-handoff.mjs` |
+| L4 runtime | `tools/agents-handoff.mjs` |
 | L4/L5 design | `docs/LEVEL4.md`, `docs/LEVEL5.md` |
 | Cross-harness adapters | `refs/ADAPTERS.md` |
 | Handoff format + schema | `docs/FORMAT.md`, `templates/` |
 | Installation | `docs/INSTALL.md` |
 
-**Version**: 2.0.0
-**Last Updated**: 2026-10-08
+**Version**: 2.0.5
+**Last Updated**: 2026-10-09

@@ -94,20 +94,32 @@ for the merged session. `index` reports the same sessions as stale.
 seven contract fields — `RESULT`, `WHAT_CHANGED`, `VALIDATION`, `EVIDENCE`, `BLOCKERS`,
 `RISKS`, `FOLLOW_UP` — each starting a line.
 
-## `verify-gate` exits 0 but the verdict says REJECTED
+## `verify-gate` exits 6 and the verdict says REJECTED
 
-**Cause:** not a bug. `verify-gate` exits 0 for both verdicts so that "the gate ran" and
-"the gate passed" stay distinguishable. Read `ok` or `verdict` from the JSON.
+**Cause:** at least one of the five checks (`sha`, `counts`, `payload`, `contract`, `evidence`)
+failed. The JSON names which, and the message on stderr names them too.
 
-**Fix:** branch on the verdict in any script that calls it. The same applies to `promote`,
-which prints the gate result but stamps the manifest either way.
+**Fix:** fix the named check. The usual one is `contract`, which requires `RESULT`,
+`WHAT_CHANGED`, `VALIDATION`, `EVIDENCE`, `BLOCKERS`, `RISKS` and `FOLLOW_UP` — each starting a
+line — in `HANDOFF.md`. That block is hand-authored; a rebuild preserves it and records its
+sha256 as `evidence_contract_sha256` on the manifest.
 
-## `promote` stamped a session that is not verified
+## `promote` refused: evidence gate REJECTED
 
-**Cause:** expected behaviour, and stated in the command reference. Promotion is a local
-stamp, not an enforcement.
+**Cause:** the gate failed and promotion is gated on it, so the manifest was left unstamped.
 
-**Fix:** run `verify-gate` first and only call `promote` when the verdict is `VERIFIED`.
+**Fix:** add the evidence contract to `HANDOFF.md` (see above) and re-run. If the gate genuinely
+cannot apply — an imported session with no hand-authored contract, say — `--force` is the
+recorded override: the manifest then carries `promoted_gate: "FORCED"` instead of `"VERIFIED"`.
+
+## `build` failed with `unparseable JSONL line(s)` (exit 5)
+
+**Cause:** a line in the source is not valid JSON. It used to be dropped in silence, which
+produced a handoff that looked complete and was not.
+
+**Fix:** repair the export, or pass `--allow-bad-lines` to skip those lines on purpose. The
+warning names how many lines were skipped, so the omission is visible in the build output rather
+than buried in the result.
 
 ## `capability-registry check` fails with `unknown`
 

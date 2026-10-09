@@ -1,6 +1,6 @@
 // tools/lib/handoff-root.mjs — ONE definition of where handoffs are stored.
 //
-// Every tool that writes handoffs (tools/handoff.mjs, tools/agent-handoff.mjs)
+// Every tool that writes handoffs (tools/handoff.mjs, tools/agents-handoff.mjs)
 // resolves its root through this module, so the precedence below has exactly one
 // implementation:
 //

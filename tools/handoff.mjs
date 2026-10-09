@@ -29,30 +29,91 @@ const argOf = (n, f) => { const i = process.argv.indexOf(n); return i >= 0 && i 
 const hasFlag = n => process.argv.includes(n);
 const fence = String.fromCharCode(96).repeat(3);
 
+// The `type` of each nested content block, if the record has a content array at all. The
+// documented rule is "kind containing reason/think becomes THOUGHT", and in a real export the
+// kind lives on the BLOCK, not on the record.
+function blockTypes(r) {
+  const pl = (r && r.payload) || {};
+  const arr = [r && r.content, r && r.parts, r && r.message && r.message.content,
+    pl.content, r && r.item && r.item.content].find(Array.isArray);
+  return (arr || []).map((p) => String((p && p.type) || '').toLowerCase()).filter(Boolean);
+}
+
 function classify(r) {
-  const k = String(r.kind || '').toLowerCase(), role = String(r.role || '').toLowerCase();
-  if (k.includes('tool') || role === 'tool') return 'TOOL';
-  if (k.includes('reason') || k.includes('think')) return 'THOUGHT';
-  if (role === 'user' || k === 'human') return 'USER';
-  if (role === 'assistant' || k === 'ai') return 'AGENT';
+  // `payload` is the Codex CLI rollout wrapper: the event type and the role live one level
+  // down, so reading only the top level mislabels (or drops) every Codex turn.
+  const pl = (r && r.payload) || {};
+  const mrole = String((r.message && r.message.role) || pl.role || '');
+  const k = String(r.kind || r.type || '').toLowerCase();
+  const kp = String(pl.kind || pl.type || '').toLowerCase();
+  const role = String(r.role || mrole || '').toLowerCase();
+  const ks = k + ' ' + kp;
+  if (ks.includes('tool') || role === 'tool' || ks.includes('function_call')) return 'TOOL';
+  if (ks.includes('reason') || ks.includes('think')) return 'THOUGHT';
+  // A record whose every typed block is reasoning is a THOUGHT turn. A record that MIXES
+  // reasoning with text/tool blocks is not — it keeps its AGENT class and keeps the text.
+  const bt = blockTypes(r);
+  if (bt.length && bt.every((t) => t.includes('think') || t.includes('reason'))) return 'THOUGHT';
+  if (role === 'user' || k === 'human' || k === 'user') return 'USER';
+  if (role === 'assistant' || k === 'ai' || k === 'assistant') return 'AGENT';
   return 'OTHER';
 }
-function textOf(r) {
-  if (typeof r.text === 'string') return r.text;
-  if (typeof r.content === 'string') return r.content;
-  if (Array.isArray(r.parts)) return r.parts.map(p => p && p.text ? p.text : '').join(' ');
+// One element of a nested content array: an Anthropic block, an OpenAI part, a Codex item.
+function partText(p) {
+  if (typeof p === 'string') return p;
+  if (!p || typeof p !== 'object') return '';
+  if (typeof p.text === 'string') return p.text;
+  if (typeof p.thinking === 'string') return p.thinking;
+  if (typeof p.content === 'string') return p.content;
+  if (Array.isArray(p.content)) return p.content.map(partText).filter(Boolean).join('\n');
+  if (p.type === 'tool_use') return 'tool_use ' + (p.name || '') + ' ' + JSON.stringify(p.input === undefined ? {} : p.input);
+  if (p.type === 'tool_result') return 'tool_result ' + (typeof p.content === 'string' ? p.content : JSON.stringify(p.content === undefined ? {} : p.content));
+  if (p.type === 'function_call') return 'function_call ' + (p.name || '') + ' ' + String(p.arguments || '');
+  if (p.type === 'function_call_output') return 'function_call_output ' + String(p.output || '');
   return '';
 }
+// Real harness exports NEST the text: Claude Code keeps it under message.content[],
+// Codex/OpenAI under content[] or output[]. Reading only top-level fields is exactly
+// why --harness was a label instead of a parser; every shipped shape is read here.
+function textOf(r) {
+  if (!r || typeof r !== 'object') return '';
+  const pl = r.payload || {};
+  if (typeof r.text === 'string' && r.text.trim()) return r.text;
+  for (const v of [r.content, r.output, r.message && r.message.content, r.message && r.message.text,
+    pl.content, pl.output, pl.text, pl.message && pl.message.content]) {
+    if (typeof v === 'string' && v.trim()) return v;
+  }
+  for (const v of [r.parts, r.content, r.output, r.message && r.message.content, r.item && r.item.content,
+    pl.parts, pl.content, pl.output, pl.items]) {
+    if (Array.isArray(v)) {
+      const s = v.map(partText).filter(Boolean).join('\n').trim();
+      if (s) return s;
+    }
+  }
+  // A bare Codex function call/output carries no `content` at all — only name/arguments/output.
+  if (pl.type === 'function_call' || pl.type === 'function_call_output') return partText(pl);
+  return '';
+}
+// Lines that are not valid JSON are CORRUPTION and are reported, never dropped in
+// silence (doctrine #1: fail closed on ambiguity). Lines that parse but carry no
+// user/assistant text are normal harness metadata (summaries, usage, system events)
+// and are counted as `skipped`, not as corruption.
+const fmtLines = (bs) => bs.slice(0, 5).map(b => b.line + ' (' + b.reason + ')').join(', ') + (bs.length > 5 ? ' +' + (bs.length - 5) + ' more' : '');
 function loadTurns(src) {
   const raw = fs.readFileSync(src, 'utf8');
+  const badLines = [];
+  let skipped = 0;
   if (/\.jsonl$/i.test(src)) {
-    return raw.split(/\r?\n/).filter(Boolean).map((l, i) => {
+    const turns = [];
+    raw.split(/\r?\n/).forEach((l, i) => {
+      if (!l.trim()) return;
       let r = null;
-      try { r = JSON.parse(l); } catch (e) { return null; }
+      try { r = JSON.parse(l); } catch (e) { badLines.push({ line: i + 1, reason: 'invalid JSON', sample: l.trim().slice(0, 80) }); return; }
       const t = textOf(r);
-      if (!t.trim()) return null;
-      return { seq: Number.isFinite(+r.seq) ? +r.seq : i, ts: String(r.ts || r.timestamp || ''), cls: classify(r), text: t };
-    }).filter(Boolean);
+      if (!t.trim()) { skipped++; return; }
+      return turns.push({ seq: Number.isFinite(+r.seq) ? +r.seq : i, ts: String(r.ts || r.timestamp || (r.message && r.message.created_at) || ''), cls: classify(r), text: t });
+    });
+    return { turns, badLines, skipped };
   }
   const turns = []; let cur = null;
   raw.split(/\r?\n/).forEach(l => {
@@ -60,7 +121,22 @@ function loadTurns(src) {
     if (m) { cur = { seq: turns.length, ts: '', cls: /^u|^h/i.test(m[1]) ? 'USER' : (/^a/i.test(m[1]) ? 'AGENT' : (/^tool/i.test(m[1]) ? 'TOOL' : 'OTHER')), text: m[2] }; turns.push(cur); }
     else if (cur) cur.text += '\n' + l;
   });
-  return turns.filter(t => t.text.trim());
+  return { turns: turns.filter(t => t.text.trim()), badLines, skipped };
+}
+// A hand-authored evidence contract (RESULT:/EVIDENCE:/... at line start) is the gate's
+// INPUT. Rebuilding regenerates HANDOFF.md, which used to erase it — silently destroying
+// the very input the gate requires. It is now carried across every rebuild verbatim.
+function preservedEvidence(mdPath) {
+  if (!fs.existsSync(mdPath)) return null;
+  const lines = fs.readFileSync(mdPath, 'utf8').split(/\r?\n/);
+  const isField = (l) => /^(RESULT|WHAT_CHANGED|VALIDATION|EVIDENCE|BLOCKERS|RISKS|FOLLOW_UP)\s*:/.test(l);
+  let first = -1, last = -1;
+  lines.forEach((l, i) => { if (isField(l)) { if (first < 0) first = i; last = i; } });
+  if (first < 0) return null;
+  let end = last;
+  for (let i = last + 1; i < lines.length; i++) { if (/^#{1,6}\s/.test(lines[i])) break; end = i; }
+  const block = lines.slice(first, end + 1).join('\n').replace(/\s+$/, '');
+  return block.trim() ? block : null;
 }
 const NOTICE_RE = /^(the )?(approval policy|approval|policy changed|system[: ]|notice\b|context low|<\w)/i;
 function pickObjective(turns, override) {
@@ -160,8 +236,15 @@ function build() {
   let src = argOf('--source', () => { const i = process.argv.indexOf('build'); return i >= 0 ? process.argv[i + 1] : null; });
   if (src && !fs.existsSync(src)) die(2, 'source not found: ' + src);
   if (!src) die(2, 'usage: build --source <file> [--session id] [--harness n] [--model m] [--project name] [--objective text]');
-  const turnsAll = loadTurns(src);
-  if (!turnsAll.length) die(4, 'no usable turns parsed from ' + src);
+  const parsed = loadTurns(src);
+  const turnsAll = parsed.turns;
+  if (!turnsAll.length) die(4, 'no usable turns parsed from ' + src +
+    (parsed.badLines.length ? ' — ' + parsed.badLines.length + ' unparseable line(s) at ' + fmtLines(parsed.badLines) : ''));
+  if (parsed.badLines.length && !hasFlag('--allow-bad-lines')) {
+    die(5, 'refusing to continue: ' + parsed.badLines.length + ' unparseable JSONL line(s) at ' + fmtLines(parsed.badLines) +
+      ' — fixing the input is the default (doctrine #1); pass --allow-bad-lines to skip them explicitly');
+  }
+  if (parsed.badLines.length) console.error('handoff: WARNING — skipped ' + parsed.badLines.length + ' unparseable line(s) because --allow-bad-lines was given');
   let firstRaw = null;
   try { firstRaw = JSON.parse(fs.readFileSync(src, 'utf8').split(/\r?\n/)[0]); } catch (e) {}
   const mArg = argOf('--model', () => null);
@@ -202,6 +285,9 @@ function build() {
   const stateNow = ((agents.at(-1) || users.at(-1) || { text: '(none)' }).text || '').slice(-1200);
   const openLoops = [...new Set(turns.flatMap(t => String(t.text).split(/\r?\n/)).filter(l => /(next step|todo|blocked|open loop|remaining work)/i.test(l)).map(l => l.trim()))].slice(0, 20);
   const toolCalls = turns.filter(t => t.cls === 'TOOL');
+  const evidenceBlock = preservedEvidence(path.join(dir, 'HANDOFF.md'));
+  if (evidenceBlock) man.evidence_contract_sha256 = sha(evidenceBlock);
+  else delete man.evidence_contract_sha256;
   man.watermark = Math.max(...turnsAll.map(t => t.seq));
   man.raw_sha256 = rsha;
   man.revisions++;
@@ -232,7 +318,13 @@ function build() {
     '- sources: ' + man.source_paths.join(', '),
     '- raw sha256: ' + rsha,
     '- manifest sha256: ' + man.manifest_sha256,
-    '- incremental: revisions=' + man.revisions + ' (update-not-recreate)', '');
+    '- incremental: revisions=' + man.revisions + ' (update-not-recreate)', '',
+    '## Evidence contract (hand-authored — preserved across rebuilds)', '',
+    ...(evidenceBlock
+      ? [evidenceBlock, '', '- contract sha256: ' + man.evidence_contract_sha256 +
+         ' (carried forward verbatim; the L4 gate reads this section)']
+      : ['(none yet) — add RESULT/WHAT_CHANGED/VALIDATION/EVIDENCE/BLOCKERS/RISKS/FOLLOW_UP and the next rebuild keeps it;',
+         '`agents-handoff.mjs verify-gate <id>` reads this section.']));
   fs.writeFileSync(path.join(dir, 'HANDOFF.md'), md.join('\n'));
   // TOOLS.md carries EVERY tool call verbatim (full text, never truncated) —
   // this is the lossless fidelity tier that answers "does the handoff contain all calls/bits".

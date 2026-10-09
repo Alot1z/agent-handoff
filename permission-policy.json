@@ -3,7 +3,7 @@
   "approved_workspaces": [
     ".",
     "repo-upstream",
-    ".agent-handoff",
+    ".agents-handoff",
     ".context"
   ],
   "system_read_only_roots": [

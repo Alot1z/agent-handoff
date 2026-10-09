@@ -1,23 +1,23 @@
 {
-  "name": "agent-handoff",
-  "version": "2.0.2",
+  "name": "agents-handoff",
+  "version": "2.0.5",
   "description": "Write, verify, and hand off complete AI working sessions across any harness (Claude Code, Codex, DeepSeek Harness, plain JSONL or text logs). Cross-harness session capture + verified continuation.",
   "domain": "orchestration",
   "installer": {
     "type": "npx",
     "package": "agents-handoff",
-    "packageVersion": "2.0.2",
+    "packageVersion": "2.0.5",
     "repository": "https://github.com/Alot1z/agent-handoff",
     "installCommand": "npx agents-handoff"
   },
   "locations": {
-    "source": "skills/agent-handoff/",
+    "source": "skills/agents-handoff/",
     "global": {
-      "windows": "<store>/<account-id>/<profile-id>/agent-handoff/  (resolved, see docs/INSTALL.md)",
-      "posix": "~/.config/<client>/account-skills/<account-id>/<profile-id>/agent-handoff/  (resolved)"
+      "windows": "<store>/<account-id>/<profile-id>/agents-handoff/  (resolved, see docs/INSTALL.md)",
+      "posix": "~/.config/<client>/account-skills/<account-id>/<profile-id>/agents-handoff/  (resolved)"
     },
-    "local": "./local/skills/agent-handoff/",
-    "project": "./skills/agent-handoff/"
+    "local": "./local/skills/agents-handoff/",
+    "project": "./skills/agents-handoff/"
   },
   "dependencies": {
     "node": ">=18.0.0",
@@ -33,7 +33,7 @@
     "retitle": "node tools/handoff.mjs retitle <id-prefix> <new-name>"
   },
   "l4": {
-    "runtime": "node tools/agent-handoff.mjs <verb> [args]",
+    "runtime": "node tools/agents-handoff.mjs <verb> [args]",
     "verbs": [
       "auto",
       "verify-gate",
@@ -68,7 +68,7 @@
       "SKILL.md",
       "README.md",
       "tools/handoff.mjs",
-      "tools/agent-handoff.mjs",
+      "tools/agents-handoff.mjs",
       "tools/handoff.test.mjs",
       "tools/capability-registry.mjs",
       "tools/runtime-engine.mjs",
@@ -91,7 +91,7 @@
       "handoff.config.schema.json",
       "handoff.config.example.json",
       "tools/handoff.mjs",
-      "tools/agent-handoff.mjs",
+      "tools/agents-handoff.mjs",
       "tools/handoff.test.mjs",
       "tools/capability-registry.mjs",
       "tools/runtime-engine.mjs",

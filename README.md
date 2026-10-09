@@ -1,4 +1,4 @@
-# agent-handoff
+# agents-handoff
 
 **[Installation guide →](https://alot1z.github.io/agent-handoff/INSTALL.html)**  ·  **[Documentation →](https://alot1z.github.io/agent-handoff/)**  ·  **[Changelog](CHANGELOG.md)**
 
@@ -8,22 +8,68 @@
 
 One handoff format for every AI coding harness. A working session — messages, tool calls,
 reasoning, and the provenance to prove where each byte came from — is captured as a folder
-that a fresh agent can continue from with zero shared memory.
+that a fresh agent can continue from with zero shared memory. Zero runtime dependencies,
+Node.js 18 or newer, nothing read from the network at run time.
 
-- Zero runtime dependencies; Node.js 18 or newer.
-- Reads any JSONL or plain-text transcript, whatever produced it.
-- Every artifact carries a sha256 provenance chain, and `verify` recomputes it.
-- Writes are backed up, verified and rolled back on failure.
+![agents-handoff: one install into every harness, a verified handoff, and an installation
+proved against the published npm tarball](assets/handoff-demo.gif)
+
+*An abbreviated run of 2.0.3: `--all` installs into every harness found, a session is captured
+and verified, and `--verify-package` proves the installed copy is the published one. The sample
+session is illustrative; the command and output shapes are the real ones.*
 
 ## Install
 
 ```bash
-npx agents-handoff
-npx agents-handoff where     # show the resolved install root, and why it was chosen
+npx agents-handoff --all      # every harness found on this machine, in one run
 ```
 
-The installer resolves the global root instead of hard-coding one. The resolution order,
-the location targets and the requirements are in the
+That is the whole install. Choose your stack instead — one harness, several, or a skills
+directory of your own:
+
+| Command | Installs into |
+|---|---|
+| `npx agents-handoff --claude` | `~/.claude/skills` — Claude Code |
+| `npx agents-handoff --codex` | `~/.codex/skills` — Codex CLI |
+| `npx agents-handoff --agents` | `~/.agents/skills` — the harness-neutral store |
+| `npx agents-handoff --harness claude,codex` | the named harnesses, in one run |
+| `npx agents-handoff --project --claude` | `./.claude/skills` — this repository only |
+| `npx agents-handoff --skills-dir <dir>` | any other stack, exactly |
+
+Without a harness flag the installer resolves the global root rather than hard-coding one and
+reports which it chose — `npx agents-handoff where` prints the same decision on its own.
+
+### Or straight from the repository
+
+```bash
+npx github:Alot1z/agent-handoff --claude   # run the installer from GitHub, no npm
+```
+
+```bash
+git clone https://github.com/Alot1z/agent-handoff.git
+cd agent-handoff
+node install/install.mjs --all      # the same installer, run from the tree
+```
+
+### Update it, and check it against the published package
+
+```bash
+npx agents-handoff --update                    # every installation found, one run
+npx agents-handoff --verify --provenance       # every installation, against its own record
+npx agents-handoff --verify-package --record   # against the tarball npm is serving
+npx agents-handoff --doctor                    # what is here, and is it intact
+npx agents-handoff --remove                    # removes the skill; your store is kept
+```
+
+Every install writes `.agents-handoff-install.json` beside the skill: a sha256 over the
+installed file set, what it was installed from, and a `package` block naming the version it
+should match. `verify` recomputes that hash and fails when a file changed, so an installation
+is checkable rather than merely present; `verify-package` fetches the published tarball,
+checks it against the registry's own integrity and shasum, and compares the installed files
+with the package file by file — `--record` stores the tarball hashes in the install record.
+`update` and `verify` with no harness flag act on **every** installation found, and `remove`
+deletes only what the install manifest owns, printing what it kept, so a store survives under
+any name. The resolution order, the location targets and the requirements are in the
 **[installation guide](https://alot1z.github.io/agent-handoff/INSTALL.html)** and
 [docs/INSTALL.md](docs/INSTALL.md).
 
@@ -86,13 +132,14 @@ Full documentation is published at **<https://alot1z.github.io/agent-handoff/>**
 
 ```
 tools/handoff.mjs              capture engine (the CLI above)
-tools/agent-handoff.mjs        runtime layer: auto, verify-gate, promote, merge, self-improve, index, dispatch
+tools/agents-handoff.mjs        runtime layer: auto, verify-gate, promote, merge, self-improve, index, dispatch
+tools/agent-handoff.mjs        forwarder to the above, kept so older notes keep working
 tools/runtime-engine.mjs       bounded execution and the permission gate
 tools/capability-registry.mjs  capability health probes
 tools/lib/                     shared store-root resolution
 docs/  refs/  templates/       documentation, reference material, output templates
 schemas/                       handoff payload and configuration schemas
-install/                       the npx installer package
+install/                       the installer behind the agents-handoff npx package
 tests/                         acceptance fixture and a minimal transcript
 ```
 

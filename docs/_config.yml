@@ -1,6 +1,8 @@
-title: agent-handoff
+title: agents-handoff
 description: Cross-harness capture and verified continuation for AI working sessions.
 url: https://alot1z.github.io
+# The site is served from the repository's Pages path, which follows the REPOSITORY name
+# (agent-handoff), not the product name (agents-handoff).
 baseurl: /agent-handoff
 plugins:
   - jekyll-relative-links

@@ -1,11 +1,19 @@
 # Changelog — agents-handoff
 
-The installer is a separate package from the skill. It follows the same
+The installer ships inside the root
+[`agents-handoff`](https://www.npmjs.com/package/agents-handoff) package: its
+`install/package.json` is `private` and tracks the release version, and the published
+`agents-handoff` bin points at `install/install.mjs`. There is no separate installer
+package on the npm registry (verified 2026-10-09: `agents-handoff` serves
+`0.0.0-stage`, `2.0.2`, `2.0.3`, `2.0.4`), so installer changes are recorded in the
+[root changelog](https://github.com/Alot1z/agent-handoff/blob/main/CHANGELOG.md) under
+the release version. The 1.x entries below are retained as the installer's own
+development history — they are not npm releases. Both changelogs follow the same
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format and Semantic Versioning.
 
 ## [1.1.0] — 2026-10-09
 
-First release published to npm. `npx agents-handoff` now installs the skill on a
+The installer gained a download path: `npx agents-handoff` now installs the skill on a
 machine that has neither a checkout nor an unpacked archive.
 
 ### Added
@@ -42,7 +50,7 @@ machine that has neither a checkout nor an unpacked archive.
 - `install` (default), `update`, `remove`, `verify`, `list` and `where`.
 - Location targets `global`, `local` and `project`, with `--path` for an exact directory.
 - Global root resolution instead of a hard-coded path: an account-skill store that already
-  holds `agent-handoff`, else `~/.agents/skills`, else an account-skill store found on the
+  holds `agents-handoff`, else `~/.agents/skills`, else an account-skill store found on the
   machine, else `~/.agents/skills`, created on install. `where` prints the resolved root and
   the rule that chose it. `AGENT_HANDOFF_GLOBAL_DIR` overrides it.
 - `--version` to install a specific version, and `--force` to skip confirmations.

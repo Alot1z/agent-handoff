@@ -60,6 +60,33 @@ It prints one `PASS` line, or `FAIL` with the reason.
 
 Treat the chain as damage detection, not as authentication.
 
+## Install provenance
+
+An installation carries its own record, `.agents-handoff-install.json`, written by the
+installer into the copy it made. It is separate from every handoff folder: it says what was
+installed and where the bytes came from, not what a session contains. `verify` run from the
+installer re-hashes the installed file set and compares it with the record.
+
+| Field group | What it records |
+|---|---|
+| `product`, `version`, `installer_version`, `installed_at` | Which version landed, and which installer wrote the record. |
+| `harness`, `target` | Where the copy went (`claude`, `codex`, `agents`, or `null` for a direct path). |
+| `source` | The tree beside the installer (`kind: 'tree'`), or the tagged archive it was fetched from (`kind: 'archive'`) with that archive's sha256. |
+| `file_count`, `files_sha256`, `files` | That the files present are the files that were installed — one hash over the set, and one per path. |
+
+What it detects: a file edited, replaced or removed after the install, because the per-file
+values and the set hash no longer match. `verify` exits non-zero and names the differing
+files, and `doctor` reports the same state for every harness installation it finds.
+
+What it cannot detect:
+
+- **A compromised source.** The record is written from whatever tree the installer ran in, so a
+  copy made from a tampered tree carries a record that matches that tree.
+- **Files outside the manifest.** The hash covers the manifest files, not anything added beside
+  them.
+- **A rewritten record.** Anyone who edits an installed copy can recompute the hashes, exactly
+  as a manifest can be re-hashed. There is no signature and no external trust anchor.
+
 ## Update instead of recreate
 
 Re-running `build` on the same session id merges rather than duplicates: turns with a sequence above

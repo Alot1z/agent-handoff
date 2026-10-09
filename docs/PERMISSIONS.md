@@ -22,7 +22,7 @@ Every operation is evaluated first and executed only on an `ALLOWED` verdict. A 
 
 | Key | Shipped value |
 |---|---|
-| `approved_workspaces` | `.` (the skill root), `repo-upstream`, `.agent-handoff`, `.context` |
+| `approved_workspaces` | `.` (the skill root), `repo-upstream`, `.agents-handoff`, `.context` |
 | `system_read_only_roots` | `C:\Windows`, `C:\Program Files`, `C:\Program Files (x86)` |
 | `personal_data_roots` | `C:\Users` |
 | `denied_roots` | empty |
@@ -103,7 +103,7 @@ are allowed only inside an approved workspace.
 
 Every decision, allowed or denied, is written to
 `<state dir>/executions/<timestamp>-<pid>-<random>.json`. The state directory is
-`AGENT_HANDOFF_STATE_DIR` when set, and `<skill>/.agent-handoff` otherwise; it is treated as
+`AGENT_HANDOFF_STATE_DIR` when set, and `<skill>/.agents-handoff` otherwise; it is treated as
 an approved workspace wherever it points.
 
 ## Declared but not enforced

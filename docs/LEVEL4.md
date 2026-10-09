@@ -5,7 +5,7 @@ title: Level 4 — the dynamic runtime layer
 # Level 4 — the dynamic runtime layer
 
 The engine ([handoff.mjs](https://github.com/Alot1z/agent-handoff/blob/main/tools/handoff.mjs)) is passive: something has to invoke it. The
-runtime layer is [tools/agent-handoff.mjs](https://github.com/Alot1z/agent-handoff/blob/main/tools/agent-handoff.mjs), which acts on the
+runtime layer is [tools/agents-handoff.mjs](https://github.com/Alot1z/agent-handoff/blob/main/tools/agents-handoff.mjs), which acts on the
 state of the store — it probes for staleness, checks a handoff against a contract, composes
 sessions, imports other stores and maintains the index.
 
@@ -13,14 +13,14 @@ Every mutating command takes a lock, so two runs cannot capture or merge the sam
 once. Locks live in `<root>/.locks/` and are named after a hash of the operation target.
 
 ```bash
-node tools/agent-handoff.mjs <command> [args]
+node tools/agents-handoff.mjs <command> [args]
 ```
 
 | Command | Purpose |
 |---|---|
 | `auto --source <file>` | Build only when the source is newer than the stored manifest. |
 | `verify-gate <id-prefix>` | Five checks: sha, counts, payload, contract, evidence. |
-| `promote <id-prefix>` | Stamp promotion metadata on a handoff's manifest. |
+| `promote <id-prefix>` | Run the evidence gate, then stamp promotion metadata on a handoff's manifest if it passed. |
 | `merge <a> <b>` | Compose two sessions of one project into one handoff. |
 | `dispatch <id-prefix> --task <objective>` | Hand the continuation to a worker (Level 5). |
 | `federated-merge --from <root>` | Import sessions from another store root. |
@@ -32,7 +32,7 @@ An unknown command prints that list and exits 2.
 ## `auto` — self-triggering capture
 
 ```bash
-node tools/agent-handoff.mjs auto --source transcript.jsonl \
+node tools/agents-handoff.mjs auto --source transcript.jsonl \
   [--session <id>] [--harness <name>] [--project <name>] [--min-fresh-ms <n>]
 ```
 
@@ -49,7 +49,7 @@ file exits 2.
 ## `verify-gate` — the evidence gate
 
 ```bash
-node tools/agent-handoff.mjs verify-gate <id-prefix>
+node tools/agents-handoff.mjs verify-gate <id-prefix>
 ```
 
 | Check | Passes when |
@@ -71,24 +71,34 @@ manifest is visible as a nonzero status.
 ## `promote` — stamping verified work
 
 ```bash
-node tools/agent-handoff.mjs promote <id-prefix>
+node tools/agents-handoff.mjs promote <id-prefix>
 ```
 
-The manifest is backed up to `manifest.json.bak`, the gate above is run and its verdict is
-printed, and the manifest is then stamped with `promoted_at` and `promoted_by` and re-hashed.
+The manifest is backed up to `manifest.json.bak`, the gate above runs, and the manifest is then
+stamped with `promoted_at`, `promoted_by` and `promoted_gate` and re-hashed.
 
-Two honest caveats:
+The gate is **enforced**, not printed and discarded. A `REJECTED` verdict stops the command with
+`exit 6`, names the checks that failed, and leaves the manifest unstamped — so an unverified
+handoff cannot become a promoted one by accident:
 
-- The gate result is **printed, not enforced**. The stamp is written even when the verdict is
-  `REJECTED`; a caller that wants a gate must run `verify-gate` and branch on `verdict`
-  before calling `promote`.
-- Promotion is local. It writes one flag pair into one manifest file; it contacts no external
-  system and publishes nothing.
+```bash
+node tools/agents-handoff.mjs promote <id-prefix>
+# agents-handoff: promote refused: evidence gate REJECTED (failed: contract) — add the evidence
+# contract to HANDOFF.md, or pass --force to override deliberately
+```
+
+`--force` is the deliberate override for the cases where the gate's input genuinely does not
+apply. It still records what happened: `promoted_gate` is `VERIFIED` after a passing gate and
+`FORCED` after an override, so a forced promotion is distinguishable afterwards from a verified
+one rather than looking identical in the manifest.
+
+One honest caveat: promotion is local. It writes flag fields into one manifest file; it contacts
+no external system and publishes nothing.
 
 ## `merge` — composing two sessions
 
 ```bash
-node tools/agent-handoff.mjs merge <id-prefix-a> <id-prefix-b>
+node tools/agents-handoff.mjs merge <id-prefix-a> <id-prefix-b>
 ```
 
 Timelines are concatenated and sorted by `ts`, and written to a new session directory named
@@ -103,7 +113,7 @@ on `contract` and `payload` until a brief is written for it, and `index` reports
 ## `federated-merge` — importing another store root
 
 ```bash
-node tools/agent-handoff.mjs federated-merge --from <remote-root> [--from <root> ...] [--dry-run]
+node tools/agents-handoff.mjs federated-merge --from <remote-root> [--from <root> ...] [--dry-run]
 ```
 
 Each remote root is expected to have the same `projects/<project>/<session>/` layout. A
@@ -121,7 +131,7 @@ recorded as failed, and a missing `--from` exits 2.
 ## `self-improve` — brief shortfalls
 
 ```bash
-node tools/agent-handoff.mjs self-improve
+node tools/agents-handoff.mjs self-improve
 ```
 
 Every session is scanned, and a session with 40 or more USER+AGENT turns whose `HANDOFF.md`
@@ -132,7 +142,7 @@ so a configured store never collects rule candidates. The file lists counts, not
 ## `index` — the store index
 
 ```bash
-node tools/agent-handoff.mjs index
+node tools/agents-handoff.mjs index
 ```
 
 Rebuilds `<root>/INDEX.json` from the manifests, with one entry per session (`id`, `uuid`,
@@ -178,7 +188,7 @@ is rewritten with a sha256 seal, and the step is appended to `<state>/jobs/<sess
 Each step is permission-gated at `R1`. `--fail-at <k>` simulates an abrupt kill before step
 `k` executes, leaving the durable state at `k-1`.
 
-The state directory is `<repo>/.agent-handoff`, or `AGENT_HANDOFF_STATE_DIR` when set.
+The state directory is `<repo>/.agents-handoff`, or `AGENT_HANDOFF_STATE_DIR` when set.
 
 | Code | Meaning |
 |---|---|
@@ -200,3 +210,4 @@ The state directory is `<repo>/.agent-handoff`, or `AGENT_HANDOFF_STATE_DIR` whe
 | 2 | Usage or configuration error, including an unresolvable store root. |
 | 3 | A lock is held, an id prefix is ambiguous, or a referenced path is missing. |
 | 4 | No session matches the prefix. |
+| 6 | The evidence gate rejected the handoff (`verify-gate`, and `promote` unless `--force`). |

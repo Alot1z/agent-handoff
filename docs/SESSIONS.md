@@ -59,6 +59,37 @@ node .github/scripts/build-sessions-index.mjs --check    # exit 1 when the page 
 `--check` is wired into CI, so a store that changes without the page changing fails the build
 instead of publishing a table that no longer matches what the engine can read.
 
+The store is also published as JSON, for anything that would rather read data than
+markdown: [`sessions.json`](sessions.json) (`1.0-session-feed`) — the same rows, with an
+`integrity` verdict per session. The filter below runs in the browser against the table you
+are looking at; nothing is fetched.
+
+<p class="session-filter">
+  <label for="session-filter">Filter sessions</label>
+  <input id="session-filter" type="search" placeholder="project, session, harness, integrity…" size="34" />
+  <span id="session-filter-count" class="session-filter-count"></span>
+</p>
+
+<script>
+(function () {
+  var input = document.getElementById('session-filter');
+  if (!input) return;
+  var rows = Array.prototype.slice.call(document.querySelectorAll('table tbody tr'));
+  var count = document.getElementById('session-filter-count');
+  function apply() {
+    var q = input.value.trim().toLowerCase(), shown = 0;
+    rows.forEach(function (tr) {
+      var hit = !q || tr.textContent.toLowerCase().indexOf(q) > -1;
+      tr.style.display = hit ? '' : 'none';
+      if (hit) shown += 1;
+    });
+    if (count) count.textContent = shown + ' of ' + rows.length + ' shown';
+  }
+  input.addEventListener('input', apply);
+  apply();
+})();
+</script>
+
 ## Next
 
 - The file-by-file contract for a session folder is in [FORMAT.md](FORMAT.md).
