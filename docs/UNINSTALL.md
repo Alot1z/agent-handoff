@@ -145,4 +145,4 @@ and can be read by a later installation, or by any tool that reads a handoff fol
 
 - [INSTALL.md](INSTALL.md)
 - [UPGRADE.md](UPGRADE.md)
-- [../README.md](https://github.com/Alot1z/agent-handoff/blob/main/README.md)
+- [../README.md](https://github.com/Alot1z/agents-handoff/blob/main/README.md)

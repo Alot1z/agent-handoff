@@ -7,7 +7,7 @@
     "type": "npx",
     "package": "agents-handoff",
     "packageVersion": "2.0.5",
-    "repository": "https://github.com/Alot1z/agent-handoff",
+    "repository": "https://github.com/Alot1z/agents-handoff",
     "installCommand": "npx agents-handoff"
   },
   "locations": {
@@ -54,7 +54,7 @@
     "schema_version": "2.0.0"
   },
   "update": {
-    "check_url": "https://github.com/Alot1z/agent-handoff/releases/latest",
+    "check_url": "https://github.com/Alot1z/agents-handoff/releases/latest",
     "auto_check": true,
     "installer": "npx agents-handoff --update"
   },

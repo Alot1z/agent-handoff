@@ -41,7 +41,7 @@ does not parse is skipped; a text source needs a line starting with `user:`, `hu
 `assistant:`, `ai:`, `system:` or `tool:`.
 
 **Fix:** inspect the first few lines of the source. If the transcript is JSONL but the fields
-are named differently, an adapter is what you want — see [ADAPTERS.md](https://github.com/Alot1z/agent-handoff/blob/main/refs/ADAPTERS.md)
+are named differently, an adapter is what you want — see [ADAPTERS.md](https://github.com/Alot1z/agents-handoff/blob/main/refs/ADAPTERS.md)
 for the canonical shape, and [INTEGRATION.md](INTEGRATION.md) for mapping a new source onto
 it.
 
@@ -140,7 +140,7 @@ unknown grant all land here. A personal-data or denied target is refused at any 
 node tools/runtime-engine.mjs evaluate --risk R1 --target <path> --json
 ```
 
-The policy itself is [permission-policy.json](https://github.com/Alot1z/agent-handoff/blob/main/permission-policy.json); read
+The policy itself is [permission-policy.json](https://github.com/Alot1z/agents-handoff/blob/main/permission-policy.json); read
 [PERMISSIONS.md](PERMISSIONS.md) for the levels.
 
 ## `runtime-engine resume` exits 4

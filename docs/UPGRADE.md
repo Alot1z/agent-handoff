@@ -88,7 +88,7 @@ package's tarball hashes.
 Replace the skill files and keep the data:
 
 1. Extract the release archive (`agents-handoff-v<version>.zip` from the
-   [releases page](https://github.com/Alot1z/agent-handoff/releases); the newest release carries
+   [releases page](https://github.com/Alot1z/agents-handoff/releases); the newest release carries
    its own version in the file name) into a temporary directory.
 2. Copy the skill files over the installation: `SKILL.md`, `skill.json`, the manifest JSON
    files, `tools/`, `tools/lib/`, `schemas/`, `refs/`, `templates/`, `docs/`, `tests/`.
@@ -174,4 +174,4 @@ upgrade damaged the folder.
 
 - [INSTALL.md](INSTALL.md)
 - [UNINSTALL.md](UNINSTALL.md)
-- [../README.md](https://github.com/Alot1z/agent-handoff/blob/main/README.md)
+- [../README.md](https://github.com/Alot1z/agents-handoff/blob/main/README.md)

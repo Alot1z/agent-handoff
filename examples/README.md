@@ -23,7 +23,7 @@ node ../../tools/handoff.mjs verify <session-id>
 
 `sessions/` is a real store: two captured sessions the engine built from the demo transcript
 and the minimal fixture, with `INDEX.json`, the per-project `PROJECT.md` files and every
-artifact a session folder holds. The [session index](https://alot1z.github.io/agent-handoff/SESSIONS.html)
+artifact a session folder holds. The [session index](https://alot1z.github.io/agents-handoff/SESSIONS.html)
 is rendered from it, so the page and the store cannot disagree.
 
 ```bash

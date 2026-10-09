@@ -10,7 +10,7 @@ or a colleague can read and continue from without the original chat. It builds f
 transcript or an adapter export, keeps a hash chain so a handoff can be re-verified, and
 merges later turns into the same session instead of duplicating it.
 
-![agents-handoff demo](https://raw.githubusercontent.com/Alot1z/agent-handoff/main/assets/handoff-demo.gif)
+![agents-handoff demo](https://raw.githubusercontent.com/Alot1z/agents-handoff/main/assets/handoff-demo.gif)
 
 ## Quick start
 
@@ -49,7 +49,7 @@ matches the record written when it was installed. The installer's full surface i
 | know exactly what a handoff folder holds | [FORMAT.md](FORMAT.md) |
 | see captured sessions, and check them | [SESSIONS.md](SESSIONS.md) |
 | fix something that is not working | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
-| feed it a transcript from your own tool | [INTEGRATION.md](INTEGRATION.md) and [../refs/ADAPTERS.md](https://github.com/Alot1z/agent-handoff/blob/main/refs/ADAPTERS.md) |
+| feed it a transcript from your own tool | [INTEGRATION.md](INTEGRATION.md) and [../refs/ADAPTERS.md](https://github.com/Alot1z/agents-handoff/blob/main/refs/ADAPTERS.md) |
 | understand what the hashes prove | [PROVENANCE.md](PROVENANCE.md) |
 
 ## All pages
@@ -72,8 +72,8 @@ matches the record written when it was installed. The installer's full surface i
 | [PROVENANCE.md](PROVENANCE.md) | The hash chain, how to verify it, what it cannot prove |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | Symptom, cause and fix, keyed to the real exit codes |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Test suite, project layout, how to add an adapter |
-| [Changelog](https://github.com/Alot1z/agent-handoff/blob/main/CHANGELOG.md) | What changed in each release, and how to add an entry |
-| [../refs/ADAPTERS.md](https://github.com/Alot1z/agent-handoff/blob/main/refs/ADAPTERS.md) | Canonical input shape and how each session source maps onto it |
+| [Changelog](https://github.com/Alot1z/agents-handoff/blob/main/CHANGELOG.md) | What changed in each release, and how to add an entry |
+| [../refs/ADAPTERS.md](https://github.com/Alot1z/agents-handoff/blob/main/refs/ADAPTERS.md) | Canonical input shape and how each session source maps onto it |
 
 ## Engine commands
 
@@ -90,5 +90,5 @@ matches the record written when it was installed. The installer's full surface i
 
 Zero dependencies, Node 18 or newer. [CLI.md](CLI.md) has the full command surface, including
 the runtime layer, bounded execution and the capability registry. See
-[../README.md](https://github.com/Alot1z/agent-handoff/blob/main/README.md) for the repository overview and [../SKILL.md](https://github.com/Alot1z/agent-handoff/blob/main/SKILL.md) for
+[../README.md](https://github.com/Alot1z/agents-handoff/blob/main/README.md) for the repository overview and [../SKILL.md](https://github.com/Alot1z/agents-handoff/blob/main/SKILL.md) for
 the skill definition.

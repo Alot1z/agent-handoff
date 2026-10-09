@@ -9,12 +9,12 @@ dependencies; there is no build step and nothing to install to run them from a c
 
 | Executable | Role | Invoked as |
 |---|---|---|
-| [`tools/handoff.mjs`](https://github.com/Alot1z/agent-handoff/blob/main/tools/handoff.mjs) | Capture engine: transcript in, handoff folder out. | `node tools/handoff.mjs <verb>`, or the published `agents-handoff` bin |
-| [`tools/agents-handoff.mjs`](https://github.com/Alot1z/agent-handoff/blob/main/tools/agents-handoff.mjs) | Runtime layer: acts on the state of the store. | `node tools/agents-handoff.mjs <verb>` |
-| [`tools/agent-handoff.mjs`](https://github.com/Alot1z/agent-handoff/blob/main/tools/agent-handoff.mjs) | Compatibility forwarder: the runtime layer's pre-rename path, kept so older notes and hooks keep working. | `node tools/agent-handoff.mjs <verb>` (forwards to `tools/agents-handoff.mjs`) |
-| [`tools/runtime-engine.mjs`](https://github.com/Alot1z/agent-handoff/blob/main/tools/runtime-engine.mjs) | Bounded execution: evaluates an operation against the policy before running it. | `node tools/runtime-engine.mjs <verb>` |
-| [`tools/capability-registry.mjs`](https://github.com/Alot1z/agent-handoff/blob/main/tools/capability-registry.mjs) | Health probes for declared capabilities. | `node tools/capability-registry.mjs <verb>` |
-| [`install/install.mjs`](https://github.com/Alot1z/agent-handoff/blob/main/install/install.mjs) | Installs, updates and removes the skill. | `npx agents-handoff <verb>` |
+| [`tools/handoff.mjs`](https://github.com/Alot1z/agents-handoff/blob/main/tools/handoff.mjs) | Capture engine: transcript in, handoff folder out. | `node tools/handoff.mjs <verb>`, or the published `agents-handoff` bin |
+| [`tools/agents-handoff.mjs`](https://github.com/Alot1z/agents-handoff/blob/main/tools/agents-handoff.mjs) | Runtime layer: acts on the state of the store. | `node tools/agents-handoff.mjs <verb>` |
+| [`tools/agent-handoff.mjs`](https://github.com/Alot1z/agents-handoff/blob/main/tools/agent-handoff.mjs) | Compatibility forwarder: the runtime layer's pre-rename path, kept so older notes and hooks keep working. | `node tools/agent-handoff.mjs <verb>` (forwards to `tools/agents-handoff.mjs`) |
+| [`tools/runtime-engine.mjs`](https://github.com/Alot1z/agents-handoff/blob/main/tools/runtime-engine.mjs) | Bounded execution: evaluates an operation against the policy before running it. | `node tools/runtime-engine.mjs <verb>` |
+| [`tools/capability-registry.mjs`](https://github.com/Alot1z/agents-handoff/blob/main/tools/capability-registry.mjs) | Health probes for declared capabilities. | `node tools/capability-registry.mjs <verb>` |
+| [`install/install.mjs`](https://github.com/Alot1z/agents-handoff/blob/main/install/install.mjs) | Installs, updates and removes the skill. | `npx agents-handoff <verb>` |
 
 Requires Node.js 18 or newer.
 
@@ -109,7 +109,7 @@ fails closed. `promote` runs the same gate and **refuses** (`exit 6`) when it is
 
 ## `tools/runtime-engine.mjs` — bounded execution
 
-Evaluates every operation against [permission-policy.json](https://github.com/Alot1z/agent-handoff/blob/main/permission-policy.json)
+Evaluates every operation against [permission-policy.json](https://github.com/Alot1z/agents-handoff/blob/main/permission-policy.json)
 before it runs, and records the decision whether it was allowed, refused or failed. Levels,
 risk classes and grants are in [PERMISSIONS.md](PERMISSIONS.md).
 

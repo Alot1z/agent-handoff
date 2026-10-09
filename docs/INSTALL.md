@@ -50,10 +50,10 @@ Two ways, and both install the same tree:
 
 ```bash
 # npm runs the repository's own package straight from GitHub — no registry copy involved
-npx github:Alot1z/agent-handoff --all
+npx github:Alot1z/agents-handoff --all
 
 # or clone it and run the installer from the checkout
-git clone https://github.com/Alot1z/agent-handoff.git
+git clone https://github.com/Alot1z/agents-handoff.git
 cd agent-handoff
 node install/install.mjs --all
 ```
@@ -346,7 +346,7 @@ Installing over an existing installation does nothing by default when the reques
 Use the release archive when you cannot run `npx`.
 
 1. Download the archive the release attaches: `agents-handoff-v<version>.zip` from the
-   [releases page](https://github.com/Alot1z/agent-handoff/releases) (there is no
+   [releases page](https://github.com/Alot1z/agents-handoff/releases) (there is no
    `latest` asset — the newest release carries its own version in the file name).
 2. Extract it into the target directory with `unzip`.
 3. Confirm the engine runs: `node "<target>/tools/handoff.mjs" config`.
@@ -391,4 +391,4 @@ By default the engine stores handoff data under its own root, inside the install
 
 - [UPGRADE.md](UPGRADE.md)
 - [UNINSTALL.md](UNINSTALL.md)
-- [../README.md](https://github.com/Alot1z/agent-handoff/blob/main/README.md)
+- [../README.md](https://github.com/Alot1z/agents-handoff/blob/main/README.md)

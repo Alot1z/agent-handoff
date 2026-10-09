@@ -99,7 +99,7 @@ complete while missing part of the session, and nothing downstream can tell the 
 ## Session sources
 
 Harness stores are read by adapters that normalise a store into the canonical JSONL shape; the
-engine has no harness-specific code. See [../refs/ADAPTERS.md](https://github.com/Alot1z/agent-handoff/blob/main/refs/ADAPTERS.md).
+engine has no harness-specific code. See [../refs/ADAPTERS.md](https://github.com/Alot1z/agents-handoff/blob/main/refs/ADAPTERS.md).
 
 | Source shape | Route |
 |---|---|

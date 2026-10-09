@@ -182,7 +182,7 @@ tests/                     acceptance fixture and a minimal transcript
 Inside an installed copy — not in this repository — the installer adds
 `.agents-handoff-install.json`, the record of what landed there and what it was made from.
 
-The documentation site at <https://alot1z.github.io/agent-handoff/> is built by GitHub Pages
+The documentation site at <https://alot1z.github.io/agents-handoff/> is built by GitHub Pages
 directly from `docs/`. `docs/_data/nav.yml` is the navigation, `docs/_config.yml` is the
 Jekyll configuration, and `.github/scripts/check-docs.mjs` fails CI when a page is missing
 from the navigation or a relative link does not resolve.

@@ -19,7 +19,7 @@ import path from 'node:path';
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..', '..');
 const DOCS = path.join(ROOT, 'docs');
 const NAV = path.join(DOCS, '_data', 'nav.yml');
-const BLOB = 'https://github.com/Alot1z/agent-handoff/blob/main/';
+const BLOB = 'https://github.com/Alot1z/agents-handoff/blob/main/';
 
 const findings = [];
 const fail = (msg) => findings.push(msg);

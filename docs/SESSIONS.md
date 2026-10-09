@@ -5,7 +5,7 @@ title: Session index
 # Session index
 
 A handoff store is a directory of captured sessions. This page is generated from the
-sample store in [`examples/sessions/`](https://github.com/Alot1z/agent-handoff/tree/main/examples/sessions), whose sessions the
+sample store in [`examples/sessions/`](https://github.com/Alot1z/agents-handoff/tree/main/examples/sessions), whose sessions the
 engine built from the two transcripts this repository ships. Nothing here is written by hand:
 the table below is a rendering of that store, re-checked on every build.
 

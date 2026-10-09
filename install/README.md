@@ -73,4 +73,4 @@ npx agents-handoff where
 
 This installer is part of the agents-handoff skill source code.
 
-See the [agents-handoff docs](https://github.com/Alot1z/agent-handoff/tree/main/docs) for more.
+See the [agents-handoff docs](https://github.com/Alot1z/agents-handoff/tree/main/docs) for more.

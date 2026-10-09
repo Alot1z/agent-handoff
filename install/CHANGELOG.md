@@ -6,7 +6,7 @@ The installer ships inside the root
 `agents-handoff` bin points at `install/install.mjs`. There is no separate installer
 package on the npm registry (verified 2026-10-09: `agents-handoff` serves
 `0.0.0-stage`, `2.0.2`, `2.0.3`, `2.0.4`), so installer changes are recorded in the
-[root changelog](https://github.com/Alot1z/agent-handoff/blob/main/CHANGELOG.md) under
+[root changelog](https://github.com/Alot1z/agents-handoff/blob/main/CHANGELOG.md) under
 the release version. The 1.x entries below are retained as the installer's own
 development history — they are not npm releases. Both changelogs follow the same
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format and Semantic Versioning.
@@ -20,7 +20,7 @@ machine that has neither a checkout nor an unpacked archive.
 
 - A download path for the published package. When no skill tree sits beside the installer, the
   archive for the requested version is fetched from
-  `https://codeload.github.com/Alot1z/agent-handoff/tar.gz` and unpacked; the same install
+  `https://codeload.github.com/Alot1z/agents-handoff/tar.gz` and unpacked; the same install
   manifest then copies out of it, so an installed copy is identical either way.
   `--version latest` resolves the newest release tag and falls back to the `main` branch,
   saying so, when the repository has no release object.

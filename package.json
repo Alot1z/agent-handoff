@@ -55,12 +55,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Alot1z/agent-handoff.git"
+    "url": "git+https://github.com/Alot1z/agents-handoff.git"
   },
   "bugs": {
-    "url": "https://github.com/Alot1z/agent-handoff/issues"
+    "url": "https://github.com/Alot1z/agents-handoff/issues"
   },
-  "homepage": "https://alot1z.github.io/agent-handoff/",
+  "homepage": "https://alot1z.github.io/agents-handoff/",
   "engines": {
     "node": ">=18.0.0"
   },

@@ -10,8 +10,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Releases before 2.0.0
 were development builds and were never published, so they are not listed.
 
-The version in [package.json](https://github.com/Alot1z/agent-handoff/blob/main/package.json)
-and [skill.json](https://github.com/Alot1z/agent-handoff/blob/main/skill.json) is the release
+The version in [package.json](https://github.com/Alot1z/agents-handoff/blob/main/package.json)
+and [skill.json](https://github.com/Alot1z/agents-handoff/blob/main/skill.json) is the release
 version, and it is the version published to npm: the repository root is the
 [`agents-handoff`](https://www.npmjs.com/package/agents-handoff) package.
 
@@ -68,7 +68,7 @@ Add entries under the matching heading as changes land.
 - A demo animation on the README and the documentation home page: one run installing into every
   harness, a session captured and verified, and an installation proved against the published
   tarball (`assets/handoff-demo.gif`).
-- **[Compatibility](https://github.com/Alot1z/agent-handoff/blob/main/docs/COMPATIBILITY.md)**
+- **[Compatibility](https://github.com/Alot1z/agents-handoff/blob/main/docs/COMPATIBILITY.md)**
   (`docs/COMPATIBILITY.md`) now records what was measured rather than what
   is assumed: Node 26 verified, and Bun verified as an alternative runtime — the engine's
   verbs run unchanged there, and the suite passes 34/34 with `bun test --timeout 30000` (Bun's
@@ -108,7 +108,7 @@ Add entries under the matching heading as changes land.
   version, registry, tarball URL, and the sha256/sha512/integrity/shasum filled in by
   `verify-package` — so an installation can be checked against the published artifact rather
   than only against itself.
-- Installing from the repository without publishing: `npx github:Alot1z/agent-handoff` runs the
+- Installing from the repository without publishing: `npx github:Alot1z/agents-handoff` runs the
   same installer straight from GitHub, and the installation guide documents both that and the
   clone-and-run path.
 - Five installer behaviour tests — multi-harness install with a record per target, `--update`
@@ -136,7 +136,7 @@ Add entries under the matching heading as changes land.
 
 ### Added
 
-- **[Session index](https://alot1z.github.io/agent-handoff/SESSIONS.html)** (`docs/SESSIONS.md`):
+- **[Session index](https://alot1z.github.io/agents-handoff/SESSIONS.html)** (`docs/SESSIONS.md`):
   a page rendered from a real handoff store, listing the captured sessions in
   `examples/sessions/` with their project, harness, turn count, revision, manifest hash and
   integrity verdict, plus the commands that reproduce each check. The sample store is built by
@@ -194,13 +194,13 @@ Documentation release. No behaviour changed; no public interface changed.
 
 ### Added
 
-- **[Command reference](https://github.com/Alot1z/agent-handoff/blob/main/docs/CLI.md)**
+- **[Command reference](https://github.com/Alot1z/agents-handoff/blob/main/docs/CLI.md)**
   (`docs/CLI.md`): every executable, verb, flag, exit code, environment variable and file
   written, in one place.
-- **[Architecture](https://github.com/Alot1z/agent-handoff/blob/main/docs/ARCHITECTURE.md)**
+- **[Architecture](https://github.com/Alot1z/agents-handoff/blob/main/docs/ARCHITECTURE.md)**
   (`docs/ARCHITECTURE.md`): the five layers, the data flow, store-root resolution, the
   write-safety discipline, and the boundaries the tool does not cross.
-- **[Troubleshooting](https://github.com/Alot1z/agent-handoff/blob/main/docs/TROUBLESHOOTING.md)**
+- **[Troubleshooting](https://github.com/Alot1z/agents-handoff/blob/main/docs/TROUBLESHOOTING.md)**
   (`docs/TROUBLESHOOTING.md`): symptom, cause and fix, keyed to the real exit codes.
 - This changelog, and a Changelog page on the site rendered from it, so the repository file
   and the published page cannot drift apart.
@@ -210,8 +210,8 @@ Documentation release. No behaviour changed; no public interface changed.
 
 ### Changed
 
-- README now links the published [installation guide](https://alot1z.github.io/agent-handoff/INSTALL.html)
-  and the [documentation site](https://alot1z.github.io/agent-handoff/) at the top, and its
+- README now links the published [installation guide](https://alot1z.github.io/agents-handoff/INSTALL.html)
+  and the [documentation site](https://alot1z.github.io/agents-handoff/) at the top, and its
   documentation table covers every page.
 - Links in `docs/` that pointed outside the published site are absolute URLs, so they resolve
   for a reader of the documentation instead of returning 404.
@@ -250,7 +250,7 @@ documentation site.
 - **Installer** (`install/`, package `agents-handoff`): `install`, `update`, `remove`,
   `verify`, `list`, `where`, targeting a resolved global root, `./local/skills/agents-handoff`,
   or `./skills/agents-handoff`.
-- **Documentation site** at <https://alot1z.github.io/agent-handoff/>, built by GitHub Pages
+- **Documentation site** at <https://alot1z.github.io/agents-handoff/>, built by GitHub Pages
   from `docs/`.
 - **CI** (`.github/workflows/ci.yml`): the test suite on Node 18, 20 and 22, a runtime-layer
   smoke test, installer help, and a required-file and JSON-validity check.
@@ -259,13 +259,13 @@ documentation site.
 
 - The engine reads transcripts and writes handoff files. It makes no network calls, and it
   never writes secrets. The limits of what the provenance chain proves are stated in
-  [docs/PROVENANCE.md](https://github.com/Alot1z/agent-handoff/blob/main/docs/PROVENANCE.md),
+  [docs/PROVENANCE.md](https://github.com/Alot1z/agents-handoff/blob/main/docs/PROVENANCE.md),
   not implied.
 
-[Unreleased]: https://github.com/Alot1z/agent-handoff/compare/v2.0.5...main
-[2.0.5]: https://github.com/Alot1z/agent-handoff/compare/v2.0.1...v2.0.5
+[Unreleased]: https://github.com/Alot1z/agents-handoff/compare/v2.0.5...main
+[2.0.5]: https://github.com/Alot1z/agents-handoff/compare/v2.0.1...v2.0.5
 [2.0.4]: https://www.npmjs.com/package/agents-handoff/v/2.0.4
 [2.0.3]: https://www.npmjs.com/package/agents-handoff/v/2.0.3
 [2.0.2]: https://www.npmjs.com/package/agents-handoff/v/2.0.2
-[2.0.1]: https://github.com/Alot1z/agent-handoff/compare/v2.0.0...v2.0.1
-[2.0.0]: https://github.com/Alot1z/agent-handoff/tree/v2.0.0
+[2.0.1]: https://github.com/Alot1z/agents-handoff/compare/v2.0.0...v2.0.1
+[2.0.0]: https://github.com/Alot1z/agents-handoff/tree/v2.0.0

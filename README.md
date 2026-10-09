@@ -1,8 +1,8 @@
 # agents-handoff
 
-**[Installation guide →](https://alot1z.github.io/agent-handoff/INSTALL.html)**  ·  **[Documentation →](https://alot1z.github.io/agent-handoff/)**  ·  **[Changelog](CHANGELOG.md)**
+**[Installation guide →](https://alot1z.github.io/agents-handoff/INSTALL.html)**  ·  **[Documentation →](https://alot1z.github.io/agents-handoff/)**  ·  **[Changelog](CHANGELOG.md)**
 
-[![CI](https://github.com/Alot1z/agent-handoff/actions/workflows/ci.yml/badge.svg)](https://github.com/Alot1z/agent-handoff/actions/workflows/ci.yml)
+[![CI](https://github.com/Alot1z/agents-handoff/actions/workflows/ci.yml/badge.svg)](https://github.com/Alot1z/agents-handoff/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](#requirements)
 
@@ -42,11 +42,11 @@ reports which it chose — `npx agents-handoff where` prints the same decision o
 ### Or straight from the repository
 
 ```bash
-npx github:Alot1z/agent-handoff --claude   # run the installer from GitHub, no npm
+npx github:Alot1z/agents-handoff --claude   # run the installer from GitHub, no npm
 ```
 
 ```bash
-git clone https://github.com/Alot1z/agent-handoff.git
+git clone https://github.com/Alot1z/agents-handoff.git
 cd agent-handoff
 node install/install.mjs --all      # the same installer, run from the tree
 ```
@@ -70,7 +70,7 @@ with the package file by file — `--record` stores the tarball hashes in the in
 `update` and `verify` with no harness flag act on **every** installation found, and `remove`
 deletes only what the install manifest owns, printing what it kept, so a store survives under
 any name. The resolution order, the location targets and the requirements are in the
-**[installation guide](https://alot1z.github.io/agent-handoff/INSTALL.html)** and
+**[installation guide](https://alot1z.github.io/agents-handoff/INSTALL.html)** and
 [docs/INSTALL.md](docs/INSTALL.md).
 
 ## Quick start
@@ -104,18 +104,18 @@ The field-by-field contract is in [docs/FORMAT.md](docs/FORMAT.md).
 
 ## Documentation
 
-Full documentation is published at **<https://alot1z.github.io/agent-handoff/>**.
+Full documentation is published at **<https://alot1z.github.io/agents-handoff/>**.
 
 | Document | Covers |
 |---|---|
 | [docs/index.md](docs/index.md) | Start here: what the tool does and how the docs fit together |
-| [docs/INSTALL.md](docs/INSTALL.md) · [site](https://alot1z.github.io/agent-handoff/INSTALL.html) | Install, locations, install options, troubleshooting |
+| [docs/INSTALL.md](docs/INSTALL.md) · [site](https://alot1z.github.io/agents-handoff/INSTALL.html) | Install, locations, install options, troubleshooting |
 | [docs/UPGRADE.md](docs/UPGRADE.md) | Updating an install, and what an update leaves alone |
 | [docs/UNINSTALL.md](docs/UNINSTALL.md) | Removing an install, and what is kept |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | How the layers fit together, the data flow, and the boundaries |
 | [docs/CLI.md](docs/CLI.md) | Every executable, verb, flag, exit code and state file |
 | [docs/FORMAT.md](docs/FORMAT.md) | Handoff folder layout, manifest fields, provenance chain |
-| [docs/SESSIONS.md](docs/SESSIONS.md) · [site](https://alot1z.github.io/agent-handoff/SESSIONS.html) | Session index: a sample store, its sessions, and the commands that verify them |
+| [docs/SESSIONS.md](docs/SESSIONS.md) · [site](https://alot1z.github.io/agents-handoff/SESSIONS.html) | Session index: a sample store, its sessions, and the commands that verify them |
 | [docs/INTEGRATION.md](docs/INTEGRATION.md) | Feeding a transcript in from another program or a CI job |
 | [docs/LEVEL4.md](docs/LEVEL4.md) | The runtime layer: verbs, the evidence gate, bounded execution |
 | [docs/LEVEL5.md](docs/LEVEL5.md) | Dispatching a verified handoff to a worker |

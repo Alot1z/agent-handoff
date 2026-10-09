@@ -26,11 +26,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Alot1z/agent-handoff.git"
+    "url": "git+https://github.com/Alot1z/agents-handoff.git"
   },
-  "homepage": "https://alot1z.github.io/agent-handoff/INSTALL.html",
+  "homepage": "https://alot1z.github.io/agents-handoff/INSTALL.html",
   "bugs": {
-    "url": "https://github.com/Alot1z/agent-handoff/issues"
+    "url": "https://github.com/Alot1z/agents-handoff/issues"
   },
   "engines": {
     "node": ">=18.0.0"

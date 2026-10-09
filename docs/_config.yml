@@ -1,9 +1,11 @@
 title: agents-handoff
 description: Cross-harness capture and verified continuation for AI working sessions.
 url: https://alot1z.github.io
-# The site is served from the repository's Pages path, which follows the REPOSITORY name
-# (agent-handoff), not the product name (agents-handoff).
-baseurl: /agent-handoff
+# The site is served from the repository's Pages path. Since the 2026-10-09 rename the
+# repository and the product share the agents-handoff name, so the Pages base path is
+# /agents-handoff. GitHub does NOT redirect the old /agent-handoff Pages URL, so this value
+# has to match the repository name exactly or every asset and nav link 404s.
+baseurl: /agents-handoff
 plugins:
   - jekyll-relative-links
 relative_links:

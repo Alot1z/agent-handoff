@@ -19,7 +19,7 @@ import crypto from 'node:crypto';
 
 const HERE = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
 const ROOT = path.resolve(HERE, '..', '..');
-const BLOB = 'https://github.com/Alot1z/agent-handoff/tree/main/';
+const BLOB = 'https://github.com/Alot1z/agents-handoff/tree/main/';
 
 const argOf = (name, fallback) => {
   const i = process.argv.indexOf(name);

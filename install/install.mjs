@@ -27,9 +27,14 @@ const LEGACY_SKILL_NAME = 'agent-handoff';
 const NPM_PACKAGE = 'agents-handoff';
 const REGISTRY = 'https://registry.npmjs.org';
 const REPO_OWNER = 'Alot1z';
-// The PRODUCT is agents-handoff; the REPOSITORY is still Alot1z/agent-handoff. The two names
-// are not the same string, and this constant is the one place the repository's name lives.
-const REPO_NAME = 'agent-handoff';
+// Since the 2026-10-09 rename, the PRODUCT and the REPOSITORY share the agents-handoff name
+// (the repository was Alot1z/agent-handoff until then, and every pre-rename URL still resolves
+// through GitHub's redirect). The one name that deliberately did NOT migrate is the
+// LEGACY_SKILL_NAME below: it is the pre-2.0.3 install DIRECTORY name, which still exists on
+// user machines and must be found and updated in place.
+// This constant is the one place the repository's name lives: the download, release and API
+// URLs below all derive from it.
+const REPO_NAME = 'agents-handoff';
 const RELEASES_URL = `https://github.com/${REPO_OWNER}/${REPO_NAME}/releases/download`;
 const TARBALL_URL = `https://codeload.github.com/${REPO_OWNER}/${REPO_NAME}/tar.gz`;
 const API_LATEST = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/releases/latest`;
