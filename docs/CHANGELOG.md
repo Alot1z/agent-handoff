@@ -50,6 +50,17 @@ Add entries under the matching heading as changes land.
   Codex rollout, a mixed valid/corrupt source, a rebuild after a hand-authored contract, and the
   promote / gate / `--force` path (39 tests, up from 34).
 
+### Fixed
+
+- `skill.json` carried the previous release version (2.0.4) while `SKILL.md`, `package.json` and
+  the installer said 2.0.5 — a published contradiction with no runtime consumer to catch it,
+  even though this changelog tells readers the two manifests carry one release version. They now
+  agree, and the suite fails if they ever diverge again.
+- `install/CHANGELOG.md` described the installer as a separate package whose first release was
+  published to npm; there is no separate installer package on the registry. It now states how
+  the installer actually ships (inside the root `agents-handoff` package), keeping the 1.x
+  entries as development history.
+
 ## [2.0.4] - 2026-10-09
 
 ### Added
@@ -251,6 +262,10 @@ documentation site.
   [docs/PROVENANCE.md](https://github.com/Alot1z/agent-handoff/blob/main/docs/PROVENANCE.md),
   not implied.
 
-[Unreleased]: https://github.com/Alot1z/agent-handoff/compare/v2.0.1...main
+[Unreleased]: https://github.com/Alot1z/agent-handoff/compare/v2.0.5...main
+[2.0.5]: https://github.com/Alot1z/agent-handoff/compare/v2.0.1...v2.0.5
+[2.0.4]: https://www.npmjs.com/package/agents-handoff/v/2.0.4
+[2.0.3]: https://www.npmjs.com/package/agents-handoff/v/2.0.3
+[2.0.2]: https://www.npmjs.com/package/agents-handoff/v/2.0.2
 [2.0.1]: https://github.com/Alot1z/agent-handoff/compare/v2.0.0...v2.0.1
 [2.0.0]: https://github.com/Alot1z/agent-handoff/tree/v2.0.0
