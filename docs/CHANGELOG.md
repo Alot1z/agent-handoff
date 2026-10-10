@@ -18,6 +18,10 @@ in the checkout is not evidence that a release has shipped. The repository root 
 
 ## [Unreleased]
 
+Add entries under the matching heading as changes land.
+
+## [2.0.6] - 2026-10-10
+
 ### Added
 
 - A local interactive demo runs deterministic synthetic sessions through the real capture CLI and verification path for Claude Code, Codex, DeepSeek Harness canonical JSONL exports, generic JSONL, and plain-text logs. It exposes the full timeline and artifacts, supports harness switching, and requires no model API or external network access.
@@ -272,7 +276,8 @@ documentation site.
   [docs/PROVENANCE.md](https://github.com/Alot1z/agents-handoff/blob/main/docs/PROVENANCE.md),
   not implied.
 
-[Unreleased]: https://github.com/Alot1z/agents-handoff/compare/v2.0.5...main
+[Unreleased]: https://github.com/Alot1z/agents-handoff/compare/v2.0.6...main
+[2.0.6]: https://github.com/Alot1z/agents-handoff/compare/v2.0.5...v2.0.6
 [2.0.5]: https://github.com/Alot1z/agents-handoff/compare/v2.0.1...v2.0.5
 [2.0.4]: https://www.npmjs.com/package/agents-handoff/v/2.0.4
 [2.0.3]: https://www.npmjs.com/package/agents-handoff/v/2.0.3
