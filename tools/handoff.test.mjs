@@ -1178,7 +1178,18 @@ test('legacy tools/agent-handoff.mjs shim forwards runtime arguments and exit st
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });
 
-test('check-docs ignores generated dist/ output but still fails on a real broken link', () => {
+// The check-docs script is a CI script: it lives under .github/, which the package `files`
+// list does not carry, so a published copy has no script to drive. Like noInstaller() above,
+// the test names that absence and skips, instead of failing the suite that ships inside the
+// tarball — which is exactly how this was caught, on the tag, by the release workflow's
+// "verify the published tarball" step.
+const CHECK_DOCS = path.join(REPO, '.github', 'scripts', 'check-docs.mjs');
+
+test('check-docs ignores generated dist/ output but still fails on a real broken link', (t) => {
+  if (!fs.existsSync(CHECK_DOCS)) {
+    t.skip('no .github/scripts in this tree — a published copy omits the CI scripts by design');
+    return;
+  }
   const root = scratch();
   try {
     const docs = path.join(root, 'docs');
@@ -1194,7 +1205,7 @@ test('check-docs ignores generated dist/ output but still fails on a real broken
     fs.mkdirSync(path.join(root, 'dist'), { recursive: true });
     fs.writeFileSync(path.join(root, 'dist', 'README.md'), readme);
     const check = () => spawnSync(process.execPath,
-      [path.join(REPO, '.github', 'scripts', 'check-docs.mjs'), '--root', root],
+      [CHECK_DOCS, '--root', root],
       { cwd: REPO, encoding: 'utf8' });
     const generatedOnly = check();
     assert.equal(generatedOnly.status, 0, 'generated dist/ output must not be scanned: ' + generatedOnly.stdout + generatedOnly.stderr);
