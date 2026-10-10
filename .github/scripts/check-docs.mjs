@@ -10,13 +10,17 @@
 //      from docs/ alone, so `../refs/ADAPTERS.md` is a valid path here and a 404 there.
 //      A link that leaves docs/ has to be an absolute URL instead.
 //
-// Run from anywhere:  node .github/scripts/check-docs.mjs
+// Run from anywhere:  node .github/scripts/check-docs.mjs [--root <dir>]
 // Exit codes: 0 every check passed; 1 at least one finding; 2 the layout is not what this
 // script reads (missing docs/ or nav.yml) — reported as its own failure, never as a pass.
 import fs from 'node:fs';
 import path from 'node:path';
 
-const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..', '..');
+// `--root <dir>` points the check at a fixture tree (the suite proves generated output is
+// ignored); the default is this script's own repository root.
+const HERE = path.resolve(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')));
+const ROOT_ARG = (() => { const i = process.argv.indexOf('--root'); return i > -1 ? process.argv[i + 1] : null; })();
+const ROOT = ROOT_ARG ? path.resolve(ROOT_ARG) : path.resolve(HERE, '..', '..');
 const DOCS = path.join(ROOT, 'docs');
 const NAV = path.join(DOCS, '_data', 'nav.yml');
 const BLOB = 'https://github.com/Alot1z/agents-handoff/blob/main/';
@@ -73,10 +77,14 @@ for (const rel of pages) {
 
 // --- links
 const LINK = /\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
+// Generated output is not documentation. The release workflow copies a subset of the tree
+// into `dist/` to zip it, and that subset's README links point at files it does not carry —
+// so scanning it reported broken links and failed the publish that had just built it.
+const SKIP_DIRS = new Set(['node_modules', '.git', 'dist']);
 const files = [];
 const walkRepo = (dir, rel) => {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (e.name === 'node_modules' || e.name === '.git') continue;
+    if (SKIP_DIRS.has(e.name)) continue;
     const r = rel ? rel + '/' + e.name : e.name;
     if (e.isDirectory()) { walkRepo(path.join(dir, e.name), r); continue; }
     if (e.name.endsWith('.md')) files.push(r);

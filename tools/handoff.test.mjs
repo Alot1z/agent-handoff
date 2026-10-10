@@ -1177,3 +1177,31 @@ test('legacy tools/agent-handoff.mjs shim forwards runtime arguments and exit st
     assert.match(invalid.stdout + invalid.stderr, /commands:/i);
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });
+
+test('check-docs ignores generated dist/ output but still fails on a real broken link', () => {
+  const root = scratch();
+  try {
+    const docs = path.join(root, 'docs');
+    fs.mkdirSync(path.join(docs, '_data'), { recursive: true });
+    fs.writeFileSync(path.join(docs, 'index.md'), '# Index\n');
+    fs.writeFileSync(path.join(docs, '_data', 'nav.yml'), '- title: Index\n  path: /index.html\n');
+    fs.mkdirSync(path.join(root, 'assets'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'assets', 'handoff-demo.gif'), 'GIF89a');
+    const readme = '![demo](assets/handoff-demo.gif)\n';
+    fs.writeFileSync(path.join(root, 'README.md'), readme);
+    // The release archive: the same README copied into a subset that does not carry the asset
+    // it links -- which is exactly what broke `npm publish` on the v2.0.6 tag run.
+    fs.mkdirSync(path.join(root, 'dist'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'dist', 'README.md'), readme);
+    const check = () => spawnSync(process.execPath,
+      [path.join(REPO, '.github', 'scripts', 'check-docs.mjs'), '--root', root],
+      { cwd: REPO, encoding: 'utf8' });
+    const generatedOnly = check();
+    assert.equal(generatedOnly.status, 0, 'generated dist/ output must not be scanned: ' + generatedOnly.stdout + generatedOnly.stderr);
+    // Non-vacuous: a dangling link in a real (non-generated) page must still fail.
+    fs.appendFileSync(path.join(root, 'README.md'), '[gone](does-not-exist.md)\n');
+    const real = check();
+    assert.equal(real.status, 1, 'a real broken link must still fail: ' + real.stdout + real.stderr);
+    assert.match(real.stderr, /link target does not exist/);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
