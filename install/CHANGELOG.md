@@ -4,8 +4,8 @@ The installer ships inside the root
 [`agents-handoff`](https://www.npmjs.com/package/agents-handoff) package: its
 `install/package.json` is `private` and tracks the release version, and the published
 `agents-handoff` bin points at `install/install.mjs`. There is no separate installer
-package on the npm registry (verified 2026-10-09: `agents-handoff` serves
-`0.0.0-stage`, `2.0.2`, `2.0.3`, `2.0.4`), so installer changes are recorded in the
+package on the npm registry (verified 2026-10-10: `agents-handoff` serves
+`0.0.0-stage`, `2.0.2`, `2.0.3`, `2.0.4`, `2.0.5`; `2.0.6` is a local candidate only), so installer changes are recorded in the
 [root changelog](https://github.com/Alot1z/agents-handoff/blob/main/CHANGELOG.md) under
 the release version. The 1.x entries below are retained as the installer's own
 development history — they are not npm releases. Both changelogs follow the same

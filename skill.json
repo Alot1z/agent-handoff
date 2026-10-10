@@ -1,12 +1,12 @@
 {
   "name": "agents-handoff",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "Write, verify, and hand off complete AI working sessions across any harness (Claude Code, Codex, DeepSeek Harness, plain JSONL or text logs). Cross-harness session capture + verified continuation.",
   "domain": "orchestration",
   "installer": {
     "type": "npx",
     "package": "agents-handoff",
-    "packageVersion": "2.0.5",
+    "packageVersion": "2.0.6",
     "repository": "https://github.com/Alot1z/agents-handoff",
     "installCommand": "npx agents-handoff"
   },

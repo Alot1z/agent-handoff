@@ -10,7 +10,13 @@ or a colleague can read and continue from without the original chat. It builds f
 transcript or an adapter export, keeps a hash chain so a handoff can be re-verified, and
 merges later turns into the same session instead of duplicating it.
 
-![agents-handoff demo](https://raw.githubusercontent.com/Alot1z/agents-handoff/main/assets/handoff-demo.gif)
+![Interactive local capture demo](https://raw.githubusercontent.com/Alot1z/agents-handoff/main/assets/handoff-demo.gif)
+
+## Interactive local demo
+
+Run the real capture CLI against a fast, deterministic synthetic agent session. Switch among the four documented capture adapters and five deterministic input-format scenarios, inspect every captured event and generated artifact, expand long tool results, and export the synthetic result. The demo has no model API, no external service, and no product-version label in its interface.
+
+Start it from a repository checkout with `node examples/demo/server.mjs`, then open the localhost URL it prints. [Read the demo instructions](https://github.com/Alot1z/agents-handoff/blob/main/examples/demo/README.md).
 
 ## Quick start
 

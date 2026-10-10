@@ -43,7 +43,7 @@ const API_LATEST = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/rele
 // `list` read back out of an installed copy. The literal below is only the fallback for the
 // run that has no tree beside it — the published package fetching an archive — and the suite
 // asserts it against SKILL.md, so a release that bumps one cannot leave the other behind.
-const FALLBACK_SKILL_VERSION = '2.0.5';
+const FALLBACK_SKILL_VERSION = '2.0.6';
 function skillVersion() {
   try {
     const md = fs.readFileSync(path.join(SOURCE_DIR, 'SKILL.md'), 'utf8');

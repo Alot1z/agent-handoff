@@ -285,6 +285,7 @@ and every entry that was left is printed under `Kept — not the installer's to 
 | `HANDOFFS_ROOT` | capture engine, runtime layer | Store root. Always wins over every other rule. |
 | `AGENT_HANDOFF_STATE_DIR` | runtime engine, capability registry | State directory for executions, checkpoints, jobs and capability state. Default `<repo>/.agents-handoff`. |
 | `AGENT_HANDOFF_GLOBAL_DIR` | installer | Overrides the resolved global install root. |
+| `AGENTS_HANDOFF_CANDIDATES_PATH` | runtime layer | Optional output path for `self-improve` candidates; useful for isolated runs and tests. |
 
 ## Files written
 

@@ -21,6 +21,8 @@ jobs:
       # lockfile to reproduce: the suite runs against the checkout as-is.
       - name: Test suite
         run: node tools/handoff.test.mjs
+      - name: Local interactive demo tests
+        run: node --test examples/demo/demo.test.mjs
       # The runtime layer acts on a STORE, so the smoke test gives it one. It used to run
       # `agents-handoff.mjs list`, which is not a verb of that tool at all (the verbs are auto,
       # verify-gate, promote, merge, federated-merge, dispatch, self-improve, index), so this

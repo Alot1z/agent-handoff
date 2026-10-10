@@ -186,28 +186,105 @@ function cmdMerge() {
     const readLines = (dir) => fs.readFileSync(path.join(dir, 'timeline.jsonl'), 'utf8').split(/\r?\n/).filter(Boolean).map((l) => JSON.parse(l));
     const ta = readLines(ha.dir);
     const tb = readLines(hb.dir);
-    const merged = [...ta, ...tb].sort((x, y) => String(x.ts).localeCompare(String(y.ts)));
+    const merged = [...ta, ...tb]
+      .sort((x, y) => String(x.ts || '').localeCompare(String(y.ts || '')))
+      .map((t, seq) => Object.assign({}, t, { seq }));
     const outId = ha.id + '+merge+' + hb.id;
     const dir = path.join(PROJ, ha.project, outId);
+    if (fs.existsSync(dir)) die(4, 'merged session already exists: ' + outId);
     fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, 'timeline.jsonl'), merged.map((t) => JSON.stringify(t)).join('\n') + '\n');
+    const timelineText = merged.map((t) => JSON.stringify(t)).join('\n') + '\n';
+    fs.writeFileSync(path.join(dir, 'timeline.jsonl'), timelineText);
+
+    const users = merged.filter((t) => t.class === 'USER');
+    const agents = merged.filter((t) => t.class === 'AGENT');
+    const tools = merged.filter((t) => t.class === 'TOOL');
+    const objective = (users.find((t) => String(t.text || '').trim()) || { text: '(none)' }).text;
+    const stateNow = String((agents.at(-1) || users.at(-1) || { text: '(none)' }).text || '').slice(-1200);
+    const openLoops = [...new Set(merged.flatMap((t) => String(t.text || '').split(/\r?\n/))
+      .filter((line) => /(next step|todo|blocked|open loop|remaining work)/i.test(line))
+      .map((line) => line.trim()))].slice(0, 20);
+    const created = now();
+    const rawSha = sha(timelineText);
     const man = {
-      session: outId, project: ha.project, harness: 'merged', created_at: now(), updated_at: now(),
-      source_paths: [ha.id, hb.id], watermark: merged.length, raw_sha256: sha(merged.map(JSON.stringify).join('|')),
-      revisions: 1, turn_count: merged.length,
-      counts: { USER: merged.filter((t) => t.class === 'USER').length, AGENT: merged.filter((t) => t.class === 'AGENT').length },
+      session: outId, project: ha.project, harness: 'merged', model: '',
+      created_at: created, updated_at: created,
+      source_paths: [ha.id, hb.id], watermark: merged.length ? merged[merged.length - 1].seq : -1,
+      raw_sha256: rawSha, revisions: 1, turn_count: merged.length,
+      counts: {
+        USER: users.length, AGENT: agents.length,
+        THOUGHT: merged.filter((t) => t.class === 'THOUGHT').length, TOOL: tools.length
+      },
       merged_from: [ha.id, hb.id]
     };
     man.manifest_sha256 = sha(JSON.stringify((o => { delete o.manifest_sha256; return o; })(Object.assign({}, man))));
+
+    const summary = {
+      schema_version: '2.0.0-summary',
+      session: { id: outId, harness: 'merged', model: '' },
+      project: ha.project, generated_at: created, objective,
+      state_now: stateNow.slice(0, 600), open_loops: openLoops, evidence_class: 'OBSERVED',
+      counts: man.counts,
+      artifacts: { full_payload: 'HANDOFF.llm.json', timeline: 'timeline.jsonl', tool_calls: 'TOOLS.md' },
+      provenance: {
+        sources: man.source_paths, raw_sha256: rawSha, manifest_sha256: man.manifest_sha256,
+        revision: man.revisions, watermark: man.watermark, total_turns: merged.length
+      }
+    };
+    const llm = Object.assign({}, summary, {
+      schema_version: '2.0.0', state_now: stateNow,
+      timeline: merged, tool_calls: tools
+    });
+    const fence = String.fromCharCode(96).repeat(3);
+    const md = [
+      '# Handoff: ' + outId, '',
+      '**Project:** ' + ha.project + '  |  **Harness:** merged',
+      '**Updated:** ' + created + '  |  **Turns:** ' + merged.length + '  |  **Revision:** 1  |  **Watermark:** seq <= ' + man.watermark, '',
+      '## Objective (verbatim)', '', fence, String(objective || '(none)'), fence, '',
+      '## State right now (verbatim tail)', '', fence, stateNow, fence, '',
+      ...(openLoops.length ? ['## Open loops / next steps', ...openLoops.map((line) => '- ' + line), ''] : []),
+      '## Recent timeline (last 40 of ' + merged.length + ' turns)', '',
+      '| seq | class | text (head 120) |', '|---:|---|---|',
+      ...merged.slice(-40).map((t) => '| ' + t.seq + ' | ' + t.class + ' | ' + String(t.text || '').slice(0, 120).split('|').join('\\|').split('\n').join(' ') + ' |'),
+      '', '## Where everything lives',
+      '- Full timeline (append-only): timeline.jsonl (' + merged.length + ' turns)',
+      '- All ' + tools.length + ' tool calls verbatim: TOOLS.md',
+      '- Machine payload: HANDOFF.llm.json / Compact payload: HANDOFF.summary.json', '',
+      '## Provenance', '- sources: ' + ha.id + ', ' + hb.id,
+      '- raw sha256: ' + rawSha, '- manifest sha256: ' + man.manifest_sha256,
+      '- incremental: revisions=1 (merged sources)', '',
+      '## Evidence contract (hand-authored — preserved across rebuilds)', '',
+      '(none yet) — add RESULT/WHAT_CHANGED/VALIDATION/EVIDENCE/BLOCKERS/RISKS/FOLLOW_UP.'
+    ].join('\n');
+    const toolsMd = [
+      '# Tool calls: ' + outId, '', 'Total: ' + tools.length, '',
+      'Entire tool-call corpus (every shell command, every edit, every tool return) verbatim.',
+      'The head-120 table in HANDOFF.md is a digest view; THIS file is the full record.'
+    ].concat(tools.map((t) => '## [' + t.seq + '] ' + (t.ts || '') + '\n' + String(t.text || ''))).join('\n\n') + '\n';
+
     fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify(man, null, 2));
-    // Cross-link the sources.
+    fs.writeFileSync(path.join(dir, 'HANDOFF.summary.json'), JSON.stringify(summary, null, 2));
+    fs.writeFileSync(path.join(dir, 'HANDOFF.llm.json'), JSON.stringify(llm, null, 2));
+    fs.writeFileSync(path.join(dir, 'HANDOFF.md'), md);
+    fs.writeFileSync(path.join(dir, 'TOOLS.md'), toolsMd);
+
+    const projectFile = path.join(PROJ, ha.project, 'PROJECT.md');
+    if (fs.existsSync(projectFile)) {
+      const body = fs.readFileSync(projectFile, 'utf8');
+      if (!body.includes(outId)) fs.appendFileSync(projectFile, '\n- merged session: ' + outId + ' (' + merged.length + ' turns)\n');
+    } else {
+      fs.writeFileSync(projectFile, '# Project: ' + ha.project + '\n\n## Sessions\n- merged session: ' + outId + ' (' + merged.length + ' turns)\n');
+    }
+
+    // Cross-link the sources, then rebuild the canonical index.
     fs.mkdirSync(LINKS, { recursive: true });
     const lp = path.join(LINKS, hb.project + '.md');
     const mark = '<!-- merged:' + outId + ' -->';
-    let t = fs.existsSync(lp) ? fs.readFileSync(lp, 'utf8') : '# Cross-links: ' + hb.project + '\n';
-    if (!t.includes(mark)) t += '- [' + now() + '] merged sessions ' + ha.id + ' + ' + hb.id + ' -> ' + outId + ' ' + mark + '\n';
-    fs.writeFileSync(lp, t);
-    console.log(JSON.stringify({ ok: true, action: 'merged', into: outId, turns: merged.length }));
+    let linkText = fs.existsSync(lp) ? fs.readFileSync(lp, 'utf8') : '# Cross-links: ' + hb.project + '\n';
+    if (!linkText.includes(mark)) linkText += '- [' + now() + '] merged sessions ' + ha.id + ' + ' + hb.id + ' -> ' + outId + ' ' + mark + '\n';
+    fs.writeFileSync(lp, linkText);
+    cmdIndex();
+    console.log(JSON.stringify({ ok: true, action: 'merged', into: outId, turns: merged.length, artifacts: ['HANDOFF.md', 'HANDOFF.summary.json', 'HANDOFF.llm.json', 'timeline.jsonl', 'TOOLS.md', 'manifest.json'] }));
   } finally {
     lock.release();
   }
@@ -231,15 +308,12 @@ function cmdDispatch() {
   const broker = (() => { const j = process.argv.indexOf('--broker'); return j >= 0 ? process.argv[j + 1] : null; })();
   const live = process.argv.includes('--live');
 
-  // Gate 1: the handoff must be VERIFIED (evidence-gated) before any dispatch.
-  const md = fs.readFileSync(path.join(hit.dir, 'HANDOFF.md'), 'utf8');
-  const missing = CONTRACT_FIELDS.filter((f) => !new RegExp('^' + f + '\\s*:', 'm').test(md));
-  const resultLine = (md.match(/^RESULT\s*:\s*(\S+)/m) || [])[1] || '';
-  const hasEvidence = /^EVIDENCE\s*:\s*\S+/m.test(md);
-  const gatePass = missing.length === 0 && (resultLine !== 'DONE' || hasEvidence);
-  if (!gatePass) {
+  // Gate 1: dispatch uses the same authoritative gate as promote. Contract fields alone
+  // are insufficient: tampered manifests, mismatched turn counts and invalid payloads block dispatch.
+  const gate = runVerifyGate(hit.id.slice(0, 16));
+  if (!gate.ok) {
     console.log(JSON.stringify({ ok: false, status: 'GATE_REJECTED', session: hit.id,
-      reason: 'handoff fails the evidence gate (missing contract fields: ' + (missing.join(',') || 'none') + '; DONE-without-EVIDENCE=' + (resultLine === 'DONE' && !hasEvidence) + ')' }, null, 2));
+      reason: 'handoff fails the authoritative evidence gate', failed: gate.failed, checks: gate.checks }, null, 2));
     process.exit(1);
   }
 
@@ -376,7 +450,9 @@ function cmdSelfImprove() {
   }
   // Skill-relative, not store-relative: the candidate file documents the SKILL's brief
   // rules, so it must not follow a configured store path.
-  const outP = path.join(SKILL_ROOT, 'docs', 'self-improve-candidates.json');
+  const outP = process.env.AGENTS_HANDOFF_CANDIDATES_PATH
+    ? path.resolve(process.env.AGENTS_HANDOFF_CANDIDATES_PATH)
+    : path.join(SKILL_ROOT, 'docs', 'self-improve-candidates.json');
   fs.mkdirSync(path.dirname(outP), { recursive: true });
   fs.writeFileSync(outP, JSON.stringify(out, null, 2));
   console.log(JSON.stringify({ ok: true, action: 'self-improve', scanned: out.scanned, candidates: out.candidates.length, written_to: outP }));
@@ -384,6 +460,8 @@ function cmdSelfImprove() {
 
 // ---------------------------------------------------------------- index
 function cmdIndex() {
+  // A fresh store has no projects/ directory yet. Indexing it is a valid empty-store operation.
+  fs.mkdirSync(PROJ, { recursive: true });
   const iP = path.join(ROOT, 'INDEX.json');
   const idx = [];
   const stale = [];

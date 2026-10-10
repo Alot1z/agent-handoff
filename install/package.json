@@ -1,6 +1,6 @@
 {
   "name": "agents-handoff",
-  "version": "2.0.5",
+  "version": "2.0.6",
   "description": "Internal manifest for the in-tree installer. The published package is the repository root (agents-handoff), whose bin `agents-handoff` points here.",
   "private": true,
   "type": "module",

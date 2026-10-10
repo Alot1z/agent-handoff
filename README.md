@@ -11,12 +11,11 @@ reasoning, and the provenance to prove where each byte came from — is captured
 that a fresh agent can continue from with zero shared memory. Zero runtime dependencies,
 Node.js 18 or newer, nothing read from the network at run time.
 
-![agents-handoff: one install into every harness, a verified handoff, and an installation
-proved against the published npm tarball](assets/handoff-demo.gif)
+![Interactive local capture demo](assets/handoff-demo.gif)
 
-*An abbreviated run of 2.0.3: `--all` installs into every harness found, a session is captured
-and verified, and `--verify-package` proves the installed copy is the published one. The sample
-session is illustrative; the command and output shapes are the real ones.*
+## Interactive local demo
+
+Run `node examples/demo/server.mjs` from a repository checkout and open the localhost URL. The demo runs the actual capture CLI on synthetic agent sessions, supports quick switching across the four documented capture adapters and five deterministic input-format scenarios, and exposes the complete captured timeline and artifacts. It does not read personal conversations, call a live model, or upload demo data. [Instructions](examples/demo/README.md).
 
 ## Install
 

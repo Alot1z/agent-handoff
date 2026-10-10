@@ -48,11 +48,15 @@ function classify(r) {
   const kp = String(pl.kind || pl.type || '').toLowerCase();
   const role = String(r.role || mrole || '').toLowerCase();
   const ks = k + ' ' + kp;
-  if (ks.includes('tool') || role === 'tool' || ks.includes('function_call')) return 'TOOL';
+  const bt = blockTypes(r);
+  // Claude Code stores tool_use/tool_result inside message.content[]. Classify those
+  // native nested events as TOOL too; checking only the outer "assistant" or "user" role
+  // silently hid real tool activity from TOOLS.md and the manifest's TOOL count.
+  if (ks.includes('tool') || role === 'tool' || ks.includes('function_call') ||
+      bt.some((t) => t.includes('tool') || t.includes('function_call'))) return 'TOOL';
   if (ks.includes('reason') || ks.includes('think')) return 'THOUGHT';
   // A record whose every typed block is reasoning is a THOUGHT turn. A record that MIXES
   // reasoning with text/tool blocks is not — it keeps its AGENT class and keeps the text.
-  const bt = blockTypes(r);
   if (bt.length && bt.every((t) => t.includes('think') || t.includes('reason'))) return 'THOUGHT';
   if (role === 'user' || k === 'human' || k === 'user') return 'USER';
   if (role === 'assistant' || k === 'ai' || k === 'assistant') return 'AGENT';

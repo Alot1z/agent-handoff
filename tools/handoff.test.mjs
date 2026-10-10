@@ -739,10 +739,10 @@ function timelineOf(manifestPath) {
     .split(/\r?\n/).filter(Boolean).map((l) => JSON.parse(l));
 }
 // The L4 runtime is a SEPARATE executable that acts on a STORE, not on a transcript.
-function runL4(args, root) {
+function runL4(args, root, extraEnv = {}) {
   return spawnSync(process.execPath, [path.join(REPO, 'tools', 'agents-handoff.mjs'), ...args], {
     cwd: REPO,
-    env: Object.assign({}, process.env, { HANDOFFS_ROOT: root, AGENT_HANDOFF_STATE_DIR: STATE_DIR }),
+    env: Object.assign({}, process.env, { HANDOFFS_ROOT: root, AGENT_HANDOFF_STATE_DIR: STATE_DIR }, extraEnv),
     encoding: 'utf8',
   });
 }
@@ -766,8 +766,11 @@ test('A: a real Claude Code transcript (nested message.content[]) parses into tu
     assert.equal(mans.length, 1, 'exactly one session built, got ' + mans.length);
     const tl = timelineOf(mans[0]);
     assert.equal(tl.length, 4, 'all four Claude Code records become turns, got ' + tl.length);
-    assert.deepEqual(tl.map((t) => t.class), ['USER', 'THOUGHT', 'AGENT', 'AGENT']);
+    assert.deepEqual(tl.map((t) => t.class), ['USER', 'THOUGHT', 'AGENT', 'TOOL']);
     assert.ok(tl[0].text.includes('Create src/sum.js'), 'the nested user text is kept');
+    assert.ok(tl[3].text.includes('tool_use Write'), 'the nested Claude tool call is preserved');
+    assert.ok(fs.readFileSync(path.join(path.dirname(mans[0]), 'TOOLS.md'), 'utf8').includes('tool_use Write'),
+      'native nested tool calls must appear in the complete tool-call artifact');
     assert.ok(tl[2].text.includes('Added src/sum.js'), 'the nested text block is kept: ' + tl[2].text);
     assert.ok(tl[3].text.includes('tool_use Write'), 'the nested tool_use call is kept: ' + tl[3].text);
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
@@ -894,5 +897,283 @@ test('C: promote refuses a handoff whose evidence gate FAILED; --force is the au
     const p3 = runL4(['promote', pre], root);
     assert.equal(p3.status, 0, 'a verified handoff promotes without --force: ' + p3.stdout + p3.stderr);
     assert.equal(JSON.parse(p3.stdout).gate, 'VERIFIED', 'a clean gate records VERIFIED: ' + p3.stdout);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+// Public CLI surface: the verbs below are documented in docs/CLI.md. Each command is
+// exercised as a subprocess against an isolated HANDOFFS_ROOT, never the user's store.
+test('CLI: --handoff alias, show, config, rename and retitle remain usable end to end', () => {
+  const root = scratch();
+  try {
+    const b = run(['--handoff', '--source', FIXTURE, '--session', 'cli-surface-session', '--project', 'cli-before'], root);
+    assert.equal(b.status, 0, 'alias build: ' + b.stderr);
+    const show = run(['show', 'cli-surface-session'], root);
+    assert.equal(show.status, 0, 'show: ' + show.stderr);
+    assert.ok(show.stdout.includes('# Handoff: cli-surface-session'));
+    const config = run(['config'], root);
+    assert.equal(config.status, 0, 'config: ' + config.stderr);
+    assert.ok(config.stdout.includes('root=' + root));
+    const rename = run(['rename', 'cli-surface-session', 'cli-after'], root);
+    assert.equal(rename.status, 0, 'rename: ' + rename.stderr);
+    assert.equal(run(['verify', 'cli-surface-session'], root).status, 0, 'verify after rename');
+    const retitle = run(['retitle', 'cli-surface-session', 'readable-session-title'], root);
+    assert.equal(retitle.status, 0, 'retitle: ' + retitle.stderr);
+    const listed = run(['list', 'cli-after'], root);
+    assert.equal(listed.status, 0, 'list after retitle: ' + listed.stderr);
+    assert.ok(listed.stdout.includes('readable-session-title'), listed.stdout);
+    const verify = run(['verify', 'readable-session-title'], root);
+    assert.equal(verify.status, 0, 'verify after retitle: ' + verify.stdout + verify.stderr);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test('parser: plain-text logs preserve multiline tool output without truncation', () => {
+  const root = scratch();
+  try {
+    const src = path.join(root, 'plain-session.txt');
+    const longOutput = 'row-output-' + 'x'.repeat(6000);
+    fs.writeFileSync(src, 'user: Inspect the synthetic fixture.\nassistant: I will inspect it.\ntool: inspect_fixture --file demo.csv\n' + longOutput + '\nassistant: The fixture was inspected successfully.\n');
+    const b = run(['build', '--source', src, '--session', 'plain-session', '--harness', 'generic-text', '--project', 'plain-project'], root);
+    assert.equal(b.status, 0, 'plain-text build: ' + b.stdout + b.stderr);
+    const dir = path.join(root, 'projects', 'plain-project', 'plain-session');
+    const tools = fs.readFileSync(path.join(dir, 'TOOLS.md'), 'utf8');
+    const timeline = fs.readFileSync(path.join(dir, 'timeline.jsonl'), 'utf8');
+    assert.ok(tools.includes(longOutput), 'complete long tool output retained');
+    assert.ok(timeline.includes(longOutput), 'complete long tool output retained in canonical timeline');
+    const man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
+    assert.equal(man.counts.TOOL, 1);
+    assert.equal(run(['verify', 'plain-session'], root).status, 0);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test('parser: canonical JSONL from a harness export retains user, assistant and tool events', () => {
+  const root = scratch();
+  try {
+    const src = path.join(root, 'canonical-export.jsonl');
+    const rows = [
+      { seq: 1, ts: '2026-10-10T10:00:00Z', harness: 'dsh', role: 'user', kind: 'text', text: 'Inspect this synthetic fixture.' },
+      { seq: 2, ts: '2026-10-10T10:00:01Z', harness: 'dsh', role: 'assistant', kind: 'text', text: 'I will inspect it.' },
+      { seq: 3, ts: '2026-10-10T10:00:02Z', harness: 'dsh', role: 'tool', kind: 'tool_use', text: 'tool_use inspect_fixture {"file":"demo.csv"}' },
+      { seq: 4, ts: '2026-10-10T10:00:03Z', harness: 'dsh', role: 'tool', kind: 'tool_result', text: 'rows=12; columns=3' },
+      { seq: 5, ts: '2026-10-10T10:00:04Z', harness: 'dsh', role: 'assistant', kind: 'text', text: 'Inspection complete.' }
+    ];
+    fs.writeFileSync(src, rows.map(JSON.stringify).join('\n') + '\n');
+    const b = run(['build', '--source', src, '--session', 'dsh-export-session', '--harness', 'dsh', '--project', 'dsh-project'], root);
+    assert.equal(b.status, 0, 'canonical export build: ' + b.stdout + b.stderr);
+    const dir = path.join(root, 'projects', 'dsh-project', 'dsh-export-session');
+    const timeline = fs.readFileSync(path.join(dir, 'timeline.jsonl'), 'utf8').split(/\r?\n/).filter(Boolean).map(JSON.parse);
+    assert.equal(timeline.length, 5);
+    assert.deepEqual(timeline.map(x => x.class), ['USER', 'AGENT', 'TOOL', 'TOOL', 'AGENT']);
+    assert.ok(fs.readFileSync(path.join(dir, 'TOOLS.md'), 'utf8').includes('rows=12; columns=3'));
+    assert.equal(run(['verify', 'dsh-export-session'], root).status, 0);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+// Level 4/5/6 public verbs: every non-live command is exercised in isolated stores.
+// No test enqueues a worker or contacts an external broker.
+test('L4: auto captures once, then skips a fresh session without duplicating turns', () => {
+  const root = scratch();
+  try {
+    const src = path.join(root, 'auto-source.jsonl');
+    fs.copyFileSync(FIXTURE, src);
+    const args = ['auto', '--source', src, '--session', 'auto-session', '--harness', 'generic', '--project', 'auto-project'];
+    const first = runL4(args, root);
+    assert.equal(first.status, 0, first.stdout + first.stderr);
+    assert.equal(JSON.parse(first.stdout).action, 'captured');
+    const second = runL4(args, root);
+    assert.equal(second.status, 0, second.stdout + second.stderr);
+    assert.equal(JSON.parse(second.stdout).action, 'skip-fresh');
+    const man = JSON.parse(fs.readFileSync(path.join(root, 'projects', 'auto-project', 'auto-session', 'manifest.json'), 'utf8'));
+    assert.equal(man.revisions, 1);
+    assert.equal(man.turn_count, 2);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test('L4: merge produces a complete verifiable handoff, not only a manifest and timeline', () => {
+  const root = scratch();
+  try {
+    for (const id of ['merge-left', 'merge-right']) {
+      const b = run(['build', '--source', FIXTURE, '--session', id, '--project', 'merge-project'], root);
+      assert.equal(b.status, 0, b.stdout + b.stderr);
+    }
+    const m = runL4(['merge', 'merge-left', 'merge-right'], root);
+    assert.equal(m.status, 0, m.stdout + m.stderr);
+    const result = JSON.parse(m.stdout.trim().split(/\r?\n/).at(-1));
+    assert.equal(result.action, 'merged');
+    const dir = path.join(root, 'projects', 'merge-project', result.into);
+    for (const file of ['manifest.json', 'timeline.jsonl', 'HANDOFF.md', 'HANDOFF.summary.json', 'HANDOFF.llm.json', 'TOOLS.md']) {
+      assert.ok(fs.existsSync(path.join(dir, file)), 'merge artifact missing: ' + file);
+    }
+    const verify = run(['verify', result.into], root);
+    assert.equal(verify.status, 0, 'merged handoff verify: ' + verify.stdout + verify.stderr);
+    const llm = JSON.parse(fs.readFileSync(path.join(dir, 'HANDOFF.llm.json'), 'utf8'));
+    assert.equal(llm.timeline.length, result.turns);
+    assert.ok(fs.readFileSync(path.join(dir, 'TOOLS.md'), 'utf8').startsWith('# Tool calls:'));
+    const idx = JSON.parse(fs.readFileSync(path.join(root, 'INDEX.json'), 'utf8'));
+    assert.ok(idx.some(row => row.id === result.into), 'merged session is indexed');
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test('L5: dispatch dry-run requires the full authoritative evidence gate, including manifest integrity', () => {
+  const root = scratch();
+  try {
+    const b = run(['build', '--source', FIXTURE, '--session', 'dispatch-session', '--project', 'dispatch-project'], root);
+    assert.equal(b.status, 0, b.stdout + b.stderr);
+    const dir = path.join(root, 'projects', 'dispatch-project', 'dispatch-session');
+    fs.appendFileSync(path.join(dir, 'HANDOFF.md'), '\n' + [
+      'RESULT: PARTIAL', 'WHAT_CHANGED: synthetic fixture inspected', 'VALIDATION: local capture',
+      'EVIDENCE: local test fixture', 'BLOCKERS: none', 'RISKS: none', 'FOLLOW_UP: none', ''
+    ].join('\n'));
+    const good = runL4(['dispatch', 'dispatch-session', '--task', 'Continue from this verified handoff'], root);
+    assert.equal(good.status, 0, good.stdout + good.stderr);
+    assert.equal(JSON.parse(good.stdout).status, 'DRY_RUN');
+    const mp = path.join(dir, 'manifest.json');
+    const man = JSON.parse(fs.readFileSync(mp, 'utf8'));
+    man.turn_count = 999;
+    fs.writeFileSync(mp, JSON.stringify(man, null, 2));
+    const bad = runL4(['dispatch', 'dispatch-session', '--task', 'This must not dispatch'], root);
+    assert.equal(bad.status, 1, 'tampered handoff must be rejected: ' + bad.stdout + bad.stderr);
+    assert.equal(JSON.parse(bad.stdout).status, 'GATE_REJECTED');
+    assert.ok(JSON.parse(bad.stdout).failed.includes('sha'));
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test('L6: federated-merge supports dry-run and imports a verified session with provenance', () => {
+  const remoteRoot = scratch();
+  const canonicalRoot = scratch();
+  try {
+    const b = run(['build', '--source', FIXTURE, '--session', 'federated-session', '--project', 'federated-project'], remoteRoot);
+    assert.equal(b.status, 0, b.stdout + b.stderr);
+    const dry = runL4(['federated-merge', '--from', remoteRoot, '--dry-run'], canonicalRoot);
+    assert.equal(dry.status, 0, dry.stdout + dry.stderr);
+    assert.equal(JSON.parse(dry.stdout).dry_run, true);
+    assert.equal(fs.existsSync(path.join(canonicalRoot, 'projects', 'federated-project', 'federated-session')), false);
+    const applied = runL4(['federated-merge', '--from', remoteRoot], canonicalRoot);
+    assert.equal(applied.status, 0, applied.stdout + applied.stderr);
+    const dir = path.join(canonicalRoot, 'projects', 'federated-project', 'federated-session');
+    const man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
+    assert.equal(man.federated_from, remoteRoot);
+    assert.ok(man.federated_at);
+    assert.equal(run(['verify', 'federated-session'], canonicalRoot).status, 0);
+  } finally {
+    fs.rmSync(remoteRoot, { recursive: true, force: true });
+    fs.rmSync(canonicalRoot, { recursive: true, force: true });
+  }
+});
+
+test('L4: self-improve and index write to the configured isolated paths', () => {
+  const root = scratch();
+  try {
+    const b = run(['build', '--source', FIXTURE, '--session', 'index-session', '--project', 'index-project'], root);
+    assert.equal(b.status, 0, b.stdout + b.stderr);
+    const candidatePath = path.join(root, 'self-improve-candidates.json');
+    const improve = runL4(['self-improve'], root, { AGENTS_HANDOFF_CANDIDATES_PATH: candidatePath });
+    assert.equal(improve.status, 0, improve.stdout + improve.stderr);
+    assert.equal(JSON.parse(improve.stdout).scanned, 1);
+    const candidates = JSON.parse(fs.readFileSync(candidatePath, 'utf8'));
+    assert.equal(candidates.scanned, 1);
+    const index = runL4(['index'], root);
+    assert.equal(index.status, 0, index.stdout + index.stderr);
+    assert.equal(JSON.parse(index.stdout).sessions, 1);
+    assert.ok(JSON.parse(fs.readFileSync(path.join(root, 'INDEX.json'), 'utf8')).some(row => row.id === 'index-session'));
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test('parser: native Claude tool_result blocks are TOOL events, not user messages', () => {
+  const root = scratch();
+  try {
+    const src = path.join(root, 'claude-tool-result.jsonl');
+    const rows = [
+      { type: 'user', message: { role: 'user', content: [{ type: 'text', text: 'Inspect the synthetic fixture.' }] } },
+      { type: 'assistant', message: { role: 'assistant', content: [{ type: 'tool_use', id: 'tool-1', name: 'inspect_fixture', input: { file: 'demo.csv' } }] } },
+      { type: 'user', message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: 'tool-1', content: 'rows=12; columns=3' }] } },
+      { type: 'assistant', message: { role: 'assistant', content: [{ type: 'text', text: 'The inspection completed.' }] } }
+    ];
+    fs.writeFileSync(src, rows.map(JSON.stringify).join('\n') + '\n');
+    const b = run(['build', '--source', src, '--session', 'claude-tool-result', '--harness', 'claude-code', '--project', 'claude-project'], root);
+    assert.equal(b.status, 0, b.stdout + b.stderr);
+    const dir = path.join(root, 'projects', 'claude-project', 'claude-tool-result');
+    const man = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
+    const timeline = timelineOf(path.join(dir, 'manifest.json'));
+    assert.equal(man.counts.TOOL, 2);
+    assert.deepEqual(timeline.map(row => row.class), ['USER', 'TOOL', 'TOOL', 'AGENT']);
+    const tools = fs.readFileSync(path.join(dir, 'TOOLS.md'), 'utf8');
+    assert.ok(tools.includes('inspect_fixture'));
+    assert.ok(tools.includes('rows=12; columns=3'));
+    assert.equal(run(['verify', 'claude-tool-result'], root).status, 0);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test('L4: verify-gate reports failure before evidence is added and passes after a valid contract', () => {
+  const root = scratch();
+  try {
+    const b = run(['build', '--source', FIXTURE, '--session', 'gate-session', '--project', 'gate-project'], root);
+    assert.equal(b.status, 0, b.stdout + b.stderr);
+    const before = runL4(['verify-gate', 'gate-session'], root);
+    assert.equal(before.status, 6);
+    assert.equal(JSON.parse(before.stdout).ok, false);
+    const dir = path.join(root, 'projects', 'gate-project', 'gate-session');
+    fs.appendFileSync(path.join(dir, 'HANDOFF.md'), '\n' + [
+      'RESULT: PARTIAL', 'WHAT_CHANGED: verified fixture parsing', 'VALIDATION: CLI capture and verify passed',
+      'EVIDENCE: local synthetic fixture and test result', 'BLOCKERS: none', 'RISKS: none', 'FOLLOW_UP: none', ''
+    ].join('\n'));
+    const after = runL4(['verify-gate', 'gate-session'], root);
+    assert.equal(after.status, 0, after.stdout + after.stderr);
+    assert.equal(JSON.parse(after.stdout).ok, true);
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test('installer: help, where and doctor are read-only and isolated from the real user profile', (t) => {
+  if (noInstaller(t)) return;
+  const root = scratch();
+  try {
+    const installer = INSTALLER;
+    const fakeHome = path.join(root, 'fake-home');
+    const globalRoot = path.join(root, 'global-install');
+    fs.mkdirSync(fakeHome, { recursive: true });
+    const env = Object.assign({}, process.env, {
+      USERPROFILE: fakeHome,
+      HOME: fakeHome,
+      APPDATA: path.join(fakeHome, 'AppData', 'Roaming'),
+      LOCALAPPDATA: path.join(fakeHome, 'AppData', 'Local'),
+      AGENT_HANDOFF_GLOBAL_DIR: globalRoot,
+      HANDOFFS_ROOT: path.join(root, 'store')
+    });
+    const runInstaller = (args) => spawnSync(process.execPath, [installer, ...args], {
+      cwd: root, env, encoding: 'utf8', timeout: 10000
+    });
+    const help = runInstaller(['--help']);
+    assert.equal(help.status, 0, help.stdout + help.stderr);
+    assert.match(help.stdout, /doctor/);
+    assert.match(help.stdout, /where/);
+    const where = runInstaller(['where']);
+    assert.equal(where.status, 0, where.stdout + where.stderr);
+    assert.ok(where.stdout.includes(globalRoot), where.stdout);
+    const doctor = runInstaller(['doctor']);
+    assert.equal(doctor.status, 0, doctor.stdout + doctor.stderr);
+    assert.match(doctor.stdout, /agents-handoff doctor/i);
+    assert.match(doctor.stdout, /Store \(where handoffs are written\)/i);
+    assert.equal(fs.existsSync(globalRoot), false, 'read-only diagnostics must not install anything');
+    assert.equal(fs.existsSync(path.join(fakeHome, '.claude')), false, 'diagnostics must not touch real or fake harness stores');
+  } finally { fs.rmSync(root, { recursive: true, force: true }); }
+});
+
+test('legacy tools/agent-handoff.mjs shim forwards runtime arguments and exit status', () => {
+  const root = scratch();
+  try {
+    const shim = path.join(REPO, 'tools', 'agent-handoff.mjs');
+    const env = Object.assign({}, process.env, {
+      HANDOFFS_ROOT: root,
+      AGENT_HANDOFF_STATE_DIR: path.join(root, 'state')
+    });
+    const indexed = spawnSync(process.execPath, [shim, 'index'], {
+      cwd: REPO, env, encoding: 'utf8', timeout: 15000
+    });
+    assert.equal(indexed.status, 0, indexed.stdout + indexed.stderr);
+    assert.equal(JSON.parse(indexed.stdout).ok, true);
+    const invalid = spawnSync(process.execPath, [shim, 'not-a-runtime-command'], {
+      cwd: REPO, env, encoding: 'utf8', timeout: 15000
+    });
+    assert.equal(invalid.status, 2);
+    assert.match(invalid.stdout + invalid.stderr, /commands:/i);
   } finally { fs.rmSync(root, { recursive: true, force: true }); }
 });

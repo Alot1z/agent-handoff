@@ -6,14 +6,24 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Releases before 2.0.0
 were development builds and were never published, so they are not listed.
 
-The version in [package.json](https://github.com/Alot1z/agents-handoff/blob/main/package.json)
-and [skill.json](https://github.com/Alot1z/agents-handoff/blob/main/skill.json) is the release
-version, and it is the version published to npm: the repository root is the
+The versions in [package.json](https://github.com/Alot1z/agents-handoff/blob/main/package.json)
+and [skill.json](https://github.com/Alot1z/agents-handoff/blob/main/skill.json) describe the local
+candidate. The npm registry is authoritative for what has actually been published; a version
+in the checkout is not evidence that a release has shipped. The repository root is the
 [`agents-handoff`](https://www.npmjs.com/package/agents-handoff) package.
 
 ## [Unreleased]
 
-Add entries under the matching heading as changes land.
+### Added
+
+- A local interactive demo runs deterministic synthetic sessions through the real capture CLI and verification path for Claude Code, Codex, DeepSeek Harness canonical JSONL exports, generic JSONL, and plain-text logs. It exposes the full timeline and artifacts, supports harness switching, and requires no model API or external network access.
+- Regression coverage for the public CLI surface and the Level 4–6 runtime commands, including auto, merge, verify-gate, dispatch, federated-merge, self-improve, and index.
+
+### Fixed
+
+- Native Claude Code `tool_use` and `tool_result` blocks are classified as tool events, so they are retained in `TOOLS.md` and tool counts instead of being mislabelled as assistant or user messages.
+- `agents-handoff merge` now creates the complete verifiable handoff artifact set and updates the session index.
+- `dispatch` now runs the authoritative evidence and integrity gate before preparing a dispatch, rejecting tampered manifests.
 
 ## [2.0.5] - 2026-10-09
 
