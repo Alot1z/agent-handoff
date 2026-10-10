@@ -20,6 +20,13 @@ in the checkout is not evidence that a release has shipped. The repository root 
 
 Add entries under the matching heading as changes land.
 
+## [2.0.7] - 2026-10-10
+
+### Fixed
+
+- **The published package runs its own suite green.** The regression test added for the release workflow drove `.github/scripts/check-docs.mjs`, which the package `files` list does not carry, so the suite inside the `2.0.6` tarball failed one test when the release workflow verified the published artifact. It now names that absence and skips, the way the installer tests handle a tree with no `install/`.
+- **`check-docs` stops scanning generated output.** The release workflow copies a subset of the tree into `dist/` to zip it and then runs `npm publish` in the same workspace; `check-docs` walked the whole repository, so that copy's README links read as broken documentation and failed the publish that had just built the archive. `dist/` is now skipped alongside `node_modules` and `.git`, and `--root` runs the check against a fixture tree.
+
 ## [2.0.6] - 2026-10-10
 
 ### Added
@@ -276,7 +283,8 @@ documentation site.
   [docs/PROVENANCE.md](https://github.com/Alot1z/agents-handoff/blob/main/docs/PROVENANCE.md),
   not implied.
 
-[Unreleased]: https://github.com/Alot1z/agents-handoff/compare/v2.0.6...main
+[Unreleased]: https://github.com/Alot1z/agents-handoff/compare/v2.0.7...main
+[2.0.7]: https://github.com/Alot1z/agents-handoff/compare/v2.0.6...v2.0.7
 [2.0.6]: https://github.com/Alot1z/agents-handoff/compare/v2.0.5...v2.0.6
 [2.0.5]: https://github.com/Alot1z/agents-handoff/compare/v2.0.1...v2.0.5
 [2.0.4]: https://www.npmjs.com/package/agents-handoff/v/2.0.4
